@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalorieFlow - Create Account</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header class="top-bar">
+        <span class="app-logo">CalorieFlow</span>
+    </header>
+    
+    <div class="register-container"> 
+        <div class="register-box">
+            
+            <div class="step-indicator">
+                <span class="step-text">Step 1 of 3</span>
+                <div class="progress-bar"><div class="progress-fill" style="width: 33.3%;"></div></div>
+            </div>
+            
+            <h2>Create Your Account</h2>
+            <p class="subtitle">Tell us a bit about yourself.</p>
+
+            <form action="{{ url_for('register',step=1)}}" method="POST">
+                <div class="form-columns">
+                    
+                    <div class="column-half"> 
+                        <div class="form-group">
+                            <label for="first-name">First Name</label>
+                            <input type="text" id="first-name" name="first-name" placeholder="Enter your first name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Gender</label> <div class="radio-group">
+        
+                                <div class="radio-option">
+                                    <input type="radio" id="male" name="gender" value="male" required>
+                                    <label for="male">Male</label>
+                                </div>
+        
+                                <div class="radio-option">
+                                    <input type="radio" id="female" name="gender" value="female">
+                                    <label for="female">Female</label>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="column-half">
+                        <div class="form-group">
+                            <label for="last-name">Last Name</label>
+                            <input type="text" id="last-name" name="last-name" placeholder="Enter your last name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dob">Date of Birth</label>
+                            <input type="date" id="dob" name="dob" placeholder="mm/dd/yyyy" required>
+                        </div>
+                    </div>
+
+                </div>
+                
+                <div class="navigation-buttons">
+                    <a href="{{ url_for('home') }}">
+                        <button type="button" class="btn-secondary">Back</button>
+                    </a>
+                    <button type="submit" class="btn-primary">Next Step</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
