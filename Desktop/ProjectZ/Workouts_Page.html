@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalorieFlow - Workouts</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+    <!-- Flatpickr Date Picker Styles -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+
+    <style>
+        /* ---------------------------------------------------- */
+        /* GLOBAL THEME & VARIABLES (Consistent across app)      */
+        /* ---------------------------------------------------- */
+        :root {
+            --cf-bg-primary: #051134;
+            /* Deep Blue Background */
+            --cf-navbar-bg: #7ECCC4;
+            /* Light Teal Navbar */
+            --cf-card-bg: #0C1E4F;
+            /* Slightly lighter dark background for cards */
+            --cf-text-light: #f8f9fa;
+            /* Light text for dark background */
+            --cf-text-secondary: #adb5bd;
+            --cf-icon-color: #7ECCC4;
+            /* Teal for icons/accents */
+            --cf-border-color: rgba(255, 255, 255, 0.1);
+
+            /* NAVBAR COLORS */
+            --cf-nav-bg: #7ECCC4;
+            --cf-dark-contrast: #27403b;
+            --cf-link-hover-blue: #0d6efd;
+            --cf-link-default: #27403b;
+            --cf-link-hover: #084c48;
+
+            /* ACCENT COLORS */
+            --cf-green-progress: #4BB543;
+            --cf-water-color: #0d6efd;
+            --cf-sleep-bad: #dc3545;
+            --cf-weight-goal-met: #ffc107;
+
+            /* WORKOUT SPECIFIC COLORS (Updated) */
+            --cf-workout-title: #7ECCC4; /* Light Blue (Teal) - for duration text/icon */
+            --cf-workout-highlight: #ffc107; /* Orange/Yellow (Light Brown) - for difficulty/muscle group text/icon */
+            --cf-workout-danger: #dc3545; /* Red */
+            
+            /* MEALS PAGE BUTTON COLORS */
+            --cf-meal-add-bg: #8BC4BE;
+            --cf-meal-add-hover: #6e9b95;
+            --cf-meal-add-color: var(--cf-bg-primary);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--cf-bg-primary);
+            color: var(--cf-text-light);
+            min-height: 100vh;
+            padding-top: 70px;
+        }
+
+        /* ---------------------------------------------------- */
+        /* NAVBAR SPECIFIC STYLES                              */
+        /* ---------------------------------------------------- */
+        .navbar {
+            background-color: var(--cf-nav-bg) !important;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 20;
+        }
+
+        .logo-text {
+            font-weight: 600;
+            color: var(--cf-dark-contrast);
+            font-size: 1.5rem !important;
+        }
+
+        .nav-link-item {
+            color: var(--cf-link-default) !important;
+            font-weight: 600;
+            margin: 0 1rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            transition: color 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .nav-link-item.active {
+            background-color: rgba(0, 0, 0, 0.2);
+            color: var(--cf-link-hover) !important;
+        }
+
+        .nav-link-item:hover {
+            color: var(--cf-link-hover) !important;
+            background-color: rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+
+        .nav-link-item .material-symbols-outlined {
+            font-size: 20px;
+            margin-right: 6px;
+            font-variation-settings: 'FILL' 0, 'wght' 500;
+            color: inherit;
+        }
+
+        /* --- USER/LOGOUT BUTTON STYLING --- */
+        .user-logout-combo {
+            background-color: transparent;
+            color: var(--cf-dark-contrast) !important;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
+            margin-left: 1rem;
+            text-decoration: none;
+        }
+
+        .user-icon-border {
+            order: 1;
+            margin-left: 8px;
+        }
+
+        .user-logout-combo:hover {
+            background-color: rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+            color: var(--cf-link-hover-blue) !important;
+        }
+
+        .user-logout-combo:hover .user-icon-border,
+        .user-logout-combo:hover .user-icon-border .material-symbols-outlined {
+            color: var(--cf-link-hover-blue) !important;
+            border-color: transparent !important;
+        }
+
+        /* MODAL & LOGOUT BUTTONS */
+        .modal-content-custom {
+            background-color: var(--cf-bg-primary) !important;
+            border: 1px solid var(--cf-nav-bg) !important;
+        }
+
+        .interactive-logout-btn {
+            background-color: var(--cf-sleep-bad) !important;
+            color: white !important;
+        }
+
+        /* ---------------------------------------------------- */
+        /* WORKOUT PAGE SPECIFIC STYLES                         */
+        /* ---------------------------------------------------- */
+        .workout-container {
+            max-width: 1000px;
+        }
+
+        .section-header {
+            color: var(--cf-icon-color);
+            font-weight: 700;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Date Picker Styling - FLATPCIKR */
+        .date-input-wrapper {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        #workoutDate {
+            background: transparent;
+            border: none;
+            font-weight: bold;
+            color: var(--cf-text-light);
+            text-align: center;
+            width: 150px;
+            cursor: pointer;
+        }
+
+        .calendar-icon-toggle {
+            transition: color 0.2s ease, transform 0.2s ease;
+            cursor: pointer;
+            color: var(--cf-icon-color);
+        }
+        
+        /* Workout Card Styling */
+        .logged-workout-card,
+        .available-workout-card {
+            background-color: var(--cf-card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--cf-border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .available-workout-card:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .workout-details h5 {
+            /* Light blue title color */
+            color: var(--cf-workout-title);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        /* Specific styling for the logged details area */
+        .logged-workout-details h5 {
+            color: var(--cf-workout-title);
+            margin-bottom: 8px;
+        }
+
+        .logged-workout-details p {
+            /* General font size adjustment for logged details */
+            font-size: 0.95rem; 
+            margin-bottom: 0;
+            color: var(--cf-text-light); 
+            line-height: 1.3;
+        }
+
+        /* Style for the enhanced metric lines (Duration, Calories) */
+        .metric-line {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem; /* Increased gap */
+            margin-top: 10px; /* Increased top margin */
+        }
+        
+        .metric-item {
+            display: inline-flex;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.95rem; /* Slightly larger text */
+        }
+
+        /* Color classes for content details (Updated) */
+        .color-title { color: var(--cf-workout-title) !important; } /* Light Blue */
+        .color-highlight { color: var(--cf-workout-highlight) !important; } /* Orange/Yellow */
+        .color-danger { color: var(--cf-workout-danger) !important; } /* Red */
+        .color-secondary { color: var(--cf-text-secondary) !important; }
+        
+        /* Icon styling */
+        .metric-icon {
+            font-size: 20px;
+            margin-right: 5px;
+            font-variation-settings: 'FILL' 1, 'wght' 500;
+        }
+        
+        /* Difficulty specific colors for the unified icon */
+        .difficulty-easy { color: var(--cf-green-progress) !important; }
+        .difficulty-medium { color: var(--cf-workout-highlight) !important; }
+        .difficulty-hard { color: var(--cf-workout-danger) !important; }
+
+
+        /* BUTTON STYLING (USING MEALS PAGE COLORS) */
+        .btn-log-modal {
+            /* RESTORED STYLES for the ADD button */
+            background-color: var(--cf-meal-add-bg) !important;
+            color: var(--cf-meal-add-color) !important;
+            font-weight: bold;
+            border-radius: 6px;
+            padding: 8px 15px;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .btn-log-modal:hover {
+            background-color: var(--cf-meal-add-hover) !important;
+            transform: scale(1.05);
+        }
+
+        .btn-delete-workout {
+            background-color: var(--cf-sleep-bad) !important;
+            color: white !important;
+        }
+
+        .btn-delete-workout:hover {
+            background-color: #c82333 !important;
+            transform: scale(1.05);
+        }
+
+        /* Progress Footer Styling */
+        .progress-footer {
+            background-color: var(--cf-card-bg);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-top: 30px;
+            border: 1px solid var(--cf-border-color);
+        }
+
+        .progress-footer .value {
+            color: var(--cf-water-color);
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ---------------------------------------------------- -->
+    <!--                       NAVBAR                           -->
+    <!-- ---------------------------------------------------- -->
+    <nav id="navbar-main" class="navbar navbar-expand-lg">
+        <div
+            class="container-fluid max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 container d-flex justify-content-between align-items-center">
+
+            <!-- Logo - CalorieFlow -->
+            <a class="navbar-brand d-flex align-items-center me-5" href="Home_Page.html">
+                <span class="fw-bold fs-5 logo-text">CalorieFlow</span>
+            </a>
+
+            <!-- Navigation Links -->
+            <div class="d-none d-lg-flex justify-content-end ms-auto me-3">
+                
+                <a class="nav-link-item" href="Progress_Page.html">
+                    <span class="material-symbols-outlined">analytics</span>
+                    Progress
+                </a>
+                
+                <a class="nav-link-item" href="Home_Page.html">
+                    <span class="material-symbols-outlined">home</span>
+                    Home
+                </a>
+                <a class="nav-link-item" href="Meals_Page.html">
+                    <span class="material-symbols-outlined">restaurant</span>
+                    Meals
+                </a>
+                <!-- WORKOUTS LINK IS ACTIVE -->
+                <a class="nav-link-item active" href="workout_page.html">
+                    <span class="material-symbols-outlined">fitness_center</span>
+                    Workouts
+                </a>
+                <a class="nav-link-item" href="Settings_Page.html">
+                    <span class="material-symbols-outlined">settings</span>
+                    Settings
+                </a>
+            </div>
+
+            <!-- Log Out Button (ICON/TEXT COMBO) -->
+            <div>
+                <button class="user-logout-combo" id="logoutDirectBtn" data-bs-toggle="modal"
+                    data-bs-target="#confirmLogoutModal" aria-label="Log Out">
+
+                    <!-- Log Out Text -->
+                    <span>Log Out</span>
+
+                    <!-- Log Out Icon -->
+                    <span class="user-icon-border">
+                        <span class="material-symbols-outlined">logout</span>
+                    </span>
+
+                </button>
+            </div>
+        </div>
+    </nav>
+    <!-- ---------------------------------------------------- -->
+
+
+    <!-- ---------------------------------------------------- -->
+    <!--                      MAIN CONTENT (WORKOUTS)         -->
+    <!-- ---------------------------------------------------- -->
+    <div class="container my-5 workout-container">
+
+        <!-- Header and Date Picker (FLATPCIKR INTEGRATED) -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-white fw-bold mb-0">Workout Diary</h1>
+
+            <!-- This form structure is used to hold the date picker elements -->
+            <form id="dateForm" method="GET" action="#">
+                <div class="date-input-wrapper d-flex align-items-center" id="datePickerWrapper">
+
+                    <label for="workoutDate" class="form-label text-white me-2 mb-0"
+                        style="font-weight: 500;">Date:</label>
+
+                    <!-- Flatpickr Input -->
+                    <input type="text" id="workoutDate" name="date" value="2025-12-07" data-input>
+
+                    <!-- Calendar Icon for dropdown (data-toggle attribute is key for Flatpickr activation) -->
+                    <span class="material-symbols-outlined calendar-icon-toggle" data-toggle
+                        style="margin-left: 0.5rem;">calendar_month</span>
+                </div>
+            </form>
+        </div>
+
+        <!-- Mock Flash Messages (Placeholder) -->
+        <div id="flashMessageContainer" class="mt-2">
+            <!-- Messages will be shown here by JavaScript -->
+        </div>
+
+
+        <!-- Logged Workouts Section -->
+        <h3 class="section-header mb-0 border-0" style="color: var(--cf-water-color);">Logged Workouts for <span
+                id="currentDateDisplay">2025-12-07</span></h3>
+        <div id="loggedWorkoutsContainer" class="mb-5">
+
+            <!-- Logged workouts injected by JS using mock data -->
+            <div class="alert alert-info bg-dark text-white-50 border-0" id="noWorkoutsMessage" style="display: none;">
+                No workouts logged for this date. Add one below!</div>
+        </div>
+
+
+        <!-- Available Workouts Section -->
+        <h3 class="section-header mt-5" style="color: var(--cf-green-progress);">Quick Add - Available Workouts</h3>
+        <div id="availableWorkoutsContainer" class="mb-5">
+
+            <!-- Available workouts injected by JS using mock data -->
+
+        </div>
+
+
+        <!-- DAILY PROGRESS FOOTER (Weekly goals removed) -->
+        <div class="progress-footer d-flex justify-content-end flex-wrap">
+            <div class="p-2">
+                <p class="mb-0 text-white"><span class="label">Daily Total Minutes:</span> <span class="value" id="dailyMinutes">0
+                        min</span></p>
+                <p class="mb-0 text-white"><span class="label">Daily Calories Burned:</span> <span class="value" id="dailyCalories"
+                        style="color: var(--cf-sleep-bad);">0 kcal</span></p>
+            </div>
+        </div>
+
+    </div>
+    <!-- ---------------------------------------------------- -->
+
+    <!-- ---------------------------------------------------- -->
+    <!--          LOGOUT CONFIRMATION MODAL (POP-UP)          -->
+    <!-- ---------------------------------------------------- -->
+    <div class="modal fade" id="confirmLogoutModal" tabindex="-1" aria-labelledby="confirmLogoutModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header">
+                    <h5 class="modal-title text-white" id="confirmLogoutModalLabel">Confirm Log Out</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
+                </div>
+                <div class="modal-body text-secondary">
+                    Are you sure you want to log out of CalorieFlow? You can always sign back in.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn interactive-logout-btn" id="confirmLogoutFinalBtn">
+                        Yes, Log Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ---------------------------------------------------- -->
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <script>
+        // --- MOCK DATA FOR FRONTEND DISPLAY (ENRICHED) ---
+        const MOCK_AVAILABLE_WORKOUTS = [
+            { "id": 1, "name": "Running (Moderate Pace)", "type": "Cardio", "focus": "Endurance", "default_duration": 30, "approx_calories": 300, "cal_per_min": 10.0, "difficulty": "Medium", "muscle_group": "Legs, Core", "description": "Steady-state run focusing on cardiovascular health and moderate calorie expenditure." },
+            { "id": 2, "name": "Cycling (High Intensity)", "type": "Cardio", "focus": "Legs, Glutes", "default_duration": 45, "approx_calories": 450, "cal_per_min": 10.0, "difficulty": "Hard", "muscle_group": "Legs, Glutes", "description": "High-intensity interval training (HIIT) on a stationary bike to maximize calorie burn and endurance." },
+            { "id": 3, "name": "Full Body Strength", "type": "Strength", "focus": "Full Body", "default_duration": 60, "approx_calories": 400, "cal_per_min": 6.6, "difficulty": "Medium", "muscle_group": "All Major Groups", "description": "A circuit combining compound lifts and bodyweight exercises targeting all major muscle groups for strength gain." },
+            { "id": 4, "name": "Yoga / Stretching", "type": "Flexibility", "focus": "Core, Mobility", "default_duration": 30, "approx_calories": 100, "cal_per_min": 3.3, "difficulty": "Easy", "muscle_group": "Core, Back", "description": "Restorative session focused on deep stretching, improved flexibility, and core stability for injury prevention." },
+        ];
+
+        // Logged workouts by date (Key: YYYY-MM-DD)
+        const MOCK_LOGGED_WORKOUTS = {
+            "2025-12-07": [
+                { "log_id": "L1", "name": "Running (Moderate Pace)", "duration": 30, "calories": 350 },
+                { "log_id": "L2", "name": "Full Body Strength", "duration": 45, "calories": 200 },
+            ],
+            "2025-12-06": [
+                { "log_id": "L3", "name": "Yoga / Stretching", "duration": 30, "calories": 110 },
+            ]
+        };
+
+        // --- GLOBAL STATE ---
+        let currentDisplayedDate = '2025-12-07'; // Default for the current view
+
+        // --- HELPER FUNCTION: GET DIFFICULTY ICON (Updated for unification and color) ---
+        const getDifficultyIcon = (difficulty) => {
+            const diff = difficulty.toLowerCase();
+            let colorClass = 'difficulty-medium'; // Default to medium color
+            
+            if (diff === 'easy') {
+                colorClass = 'difficulty-easy';
+            } else if (diff === 'hard') {
+                colorClass = 'difficulty-hard';
+            }
+            // Using local_fire_department for intensity indicator, color coded by difficulty class
+            return `<span class="material-symbols-outlined metric-icon ${colorClass}">local_fire_department</span>`; 
+        };
+        
+        // --- HELPER FUNCTION: GET HTML CARD DETAILS (Available Workouts) ---
+        const getAvailableWorkoutDetailsHtml = (workout) => {
+            return `
+                <div class="workout-details flex-grow-1 me-3">
+                    <h5 class="color-title">${workout.name}</h5>
+                    
+                    <p class="mb-1" style="font-size: 0.95rem; font-weight: 700;">
+                         ${getDifficultyIcon(workout.difficulty)} <span class="color-highlight">${workout.difficulty}</span>
+                        
+                        <!-- NEW ICON: exercise_weights (Dumbbell) for Muscle Group, using highlight color -->
+                        <span class="material-symbols-outlined metric-icon color-highlight" style="margin-left: 1.5rem;">exercise_weights</span> 
+                        <span class="color-highlight">${workout.muscle_group}</span>
+                    </p>
+                    
+                    <p class="color-secondary mb-2" style="font-size: 0.9rem; line-height: 1.3;">
+                        Description: ${workout.description}
+                    </p>
+                    
+                    <div class="metric-line">
+                        <span class="metric-item">
+                            <!-- Duration icon and text use Light Blue color -->
+                            <span class="material-symbols-outlined metric-icon color-title">schedule</span>
+                            <span class="color-title">${workout.default_duration} min</span>
+                        </span>
+                        
+                        <span class="metric-item color-danger">
+                            <span class="material-symbols-outlined metric-icon color-danger">bolt</span>
+                            ${workout.cal_per_min.toFixed(1)} kcal/min
+                        </span>
+                        
+                        <span class="metric-item color-danger">
+                            <span class="material-symbols-outlined metric-icon color-danger">local_fire_department</span>
+                            ${workout.approx_calories} kcal
+                        </span>
+                    </div>
+                </div>
+            `;
+        };
+        
+        // --- HELPER FUNCTION: GET HTML CARD DETAILS (Logged Workouts - Unified Formatting) ---
+        const getLoggedWorkoutDetailsHtml = (log) => {
+            // Find the original workout data
+            const baseWorkout = MOCK_AVAILABLE_WORKOUTS.find(w => w.name === log.name);
+            
+            // Extract or calculate details for display consistency
+            const calPerMin = baseWorkout ? baseWorkout.cal_per_min : (log.calories / log.duration) || 0;
+            const muscleGroup = baseWorkout ? baseWorkout.muscle_group : "N/A";
+            const description = baseWorkout ? baseWorkout.description : "Logged manually.";
+            const difficulty = baseWorkout ? baseWorkout.difficulty : "N/A";
+            
+            return `
+                <div class="logged-workout-details flex-grow-1 me-3">
+                    <h5 class="color-title">${log.name}</h5>
+                    
+                    <p class="mb-1" style="font-size: 0.95rem; font-weight: 700;">
+                         ${getDifficultyIcon(difficulty)} <span class="color-highlight">${difficulty}</span> 
+                        
+                        <!-- NEW ICON: exercise_weights (Dumbbell) for Muscle Group, using highlight color -->
+                        <span class="material-symbols-outlined metric-icon color-highlight" style="margin-left: 1.5rem;">exercise_weights</span> 
+                        <span class="color-highlight">${muscleGroup}</span>
+                    </p>
+                    
+                    <p class="color-secondary mb-2" style="font-size: 0.9rem; line-height: 1.3;">
+                        Description: ${description}
+                    </p>
+
+                    <div class="metric-line">
+                        <span class="metric-item">
+                            <!-- Duration icon and text use Light Blue color -->
+                            <span class="material-symbols-outlined metric-icon color-title">schedule</span>
+                            <span class="color-title">${log.duration} min</span>
+                        </span>
+                        
+                        <span class="metric-item color-danger">
+                            <span class="material-symbols-outlined metric-icon color-danger">bolt</span>
+                            ${calPerMin.toFixed(1)} kcal/min
+                        </span>
+                        
+                        <span class="metric-item color-danger">
+                            <span class="material-symbols-outlined metric-icon color-danger">local_fire_department</span>
+                            ${log.calories} kcal
+                        </span>
+                    </div>
+                </div>
+            `;
+        };
+
+
+        // --- CORE UI RENDER FUNCTIONS ---
+
+        const renderAvailableWorkouts = () => {
+            const container = document.getElementById('availableWorkoutsContainer');
+            container.innerHTML = '';
+
+            MOCK_AVAILABLE_WORKOUTS.forEach(workout => {
+                const cardHtml = `
+                    <div class="available-workout-card">
+                        ${getAvailableWorkoutDetailsHtml(workout)}
+                        
+                        <!-- Direct logging button (btn-log-modal class restored) -->
+                        <button class="btn btn-sm btn-log-modal flex-shrink-0"
+                                onclick="handleDirectLog(this)"
+                                data-workout-id="${workout.id}"
+                                data-workout-name="${workout.name}"
+                                data-duration="${workout.default_duration}"
+                                data-calories="${workout.approx_calories}">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">add_circle</span> Add
+                        </button>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        };
+
+        const renderLoggedWorkouts = (date) => {
+            const container = document.getElementById('loggedWorkoutsContainer');
+            const noWorkoutsMessage = document.getElementById('noWorkoutsMessage');
+            const workouts = MOCK_LOGGED_WORKOUTS[date] || [];
+
+            let totalMinutes = 0;
+            let totalCalories = 0;
+            container.innerHTML = '';
+
+            document.getElementById('currentDateDisplay').textContent = date;
+
+            if (workouts.length === 0) {
+                if (noWorkoutsMessage) {
+                    noWorkoutsMessage.style.display = 'block';
+                    container.appendChild(noWorkoutsMessage);
+                }
+            } else {
+                if (noWorkoutsMessage) {
+                    noWorkoutsMessage.style.display = 'none';
+                }
+
+                workouts.forEach(log => {
+                    const cardHtml = `
+                        <div class="logged-workout-card" data-log-id="${log.log_id}">
+                            ${getLoggedWorkoutDetailsHtml(log)}
+                            <button class="btn btn-sm btn-delete-workout" data-log-id="${log.log_id}">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+                            </button>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', cardHtml);
+                    totalMinutes += log.duration;
+                    totalCalories += log.calories;
+                });
+            }
+
+            // Update footer totals
+            document.getElementById('dailyMinutes').textContent = `${totalMinutes} min`;
+            document.getElementById('dailyCalories').textContent = `${totalCalories} kcal`;
+        };
+
+        // --- DIRECT LOGGING HANDLER (TRIGGERED by Quick Add Button) ---
+        window.handleDirectLog = function (buttonElement) {
+            const workoutId = parseInt(buttonElement.getAttribute('data-workout-id'));
+            const workoutName = buttonElement.getAttribute('data-workout-name');
+            const duration = parseInt(buttonElement.getAttribute('data-duration'));
+            const calories = parseInt(buttonElement.getAttribute('data-calories'));
+            
+            // Create new mock log entry
+            const newLogEntry = {
+                "log_id": `L${Date.now()}`,
+                "name": workoutName,
+                "duration": duration,
+                "calories": calories
+            };
+
+            if (!MOCK_LOGGED_WORKOUTS[currentDisplayedDate]) {
+                MOCK_LOGGED_WORKOUTS[currentDisplayedDate] = [];
+            }
+            MOCK_LOGGED_WORKOUTS[currentDisplayedDate].push(newLogEntry);
+
+            // Update UI for the current date view
+            renderLoggedWorkouts(currentDisplayedDate);
+
+            // Show success message
+            showFlashMessage(`Quickly added ${workoutName} (${duration} min).`, 'success');
+
+            console.log(`LOG: Added workout ID ${workoutId} for date ${currentDisplayedDate}`);
+        };
+
+
+        const handleDeleteWorkout = (event) => {
+            const deleteButton = event.target.closest('.btn-delete-workout');
+            if (deleteButton) {
+                const logId = deleteButton.getAttribute('data-log-id');
+
+                if (MOCK_LOGGED_WORKOUTS[currentDisplayedDate]) {
+                    const initialLength = MOCK_LOGGED_WORKOUTS[currentDisplayedDate].length;
+
+                    // Filter out the deleted workout
+                    MOCK_LOGGED_WORKOUTS[currentDisplayedDate] = MOCK_LOGGED_WORKOUTS[currentDisplayedDate].filter(w => w.log_id !== logId);
+
+                    if (MOCK_LOGGED_WORKOUTS[currentDisplayedDate].length < initialLength) {
+                        // Update UI and show message
+                        renderLoggedWorkouts(currentDisplayedDate);
+                        showFlashMessage('Workout deleted successfully.', 'danger');
+                    }
+                }
+            }
+        };
+
+        const showFlashMessage = (message, category) => {
+            const container = document.getElementById('flashMessageContainer');
+            const alertClass = category === 'success' ? 'alert-success' : 'alert-danger';
+
+            // Clear old messages
+            container.innerHTML = '';
+
+            const alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', alertHtml);
+
+            // Auto-hide success messages
+            if (category === 'success') {
+                setTimeout(() => {
+                    const alertElement = container.querySelector('.alert');
+                    if (alertElement) {
+                        bootstrap.Alert.getInstance(alertElement)?.close();
+                    }
+                }, 3000);
+            }
+        };
+
+        const initializeDate = () => {
+            // Check if a date parameter is in the URL, otherwise use the static default
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('date')) {
+                currentDisplayedDate = urlParams.get('date');
+            }
+        };
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // 1. Initialize date and render content based on initial/URL date
+            initializeDate();
+            renderAvailableWorkouts();
+            // Render logged workouts based on the determined date
+            renderLoggedWorkouts(currentDisplayedDate);
+
+            // --- FLATPCIKR INITIALIZATION ---
+            const dateWrapper = document.getElementById('datePickerWrapper');
+
+            // FIX: Initialize Flatpickr correctly using the wrapper element to handle click delegation
+            const fp = flatpickr(dateWrapper, {
+                theme: "dark",
+                dateFormat: "Y-m-d", // YYYY-MM-DD format for data processing
+                defaultDate: currentDisplayedDate,
+
+                // Set the input field as the data target
+                altInput: true,
+                altFormat: "Y-m-d", // Ensure the input displays YYYY-MM-DD
+
+                // This is the key change: use the entire wrapper as the element to wrap, 
+                // and the input as the data input. Flatpickr manages the toggle internally now.
+                wrap: true,
+                disableMobile: true,
+
+                onChange: function (selectedDates, dateStr, instance) {
+                    // Update the global state and re-render UI for the new date
+                    currentDisplayedDate = dateStr;
+                    renderLoggedWorkouts(currentDisplayedDate);
+                    // Update URL without reloading (simulates fetching new data from server)
+                    history.pushState(null, '', `?date=${dateStr}`);
+                }
+            });
+
+            // --- EVENT LISTENERS ---
+
+            // Handle delete button clicks
+            document.getElementById('loggedWorkoutsContainer').addEventListener('click', handleDeleteWorkout);
+
+
+            // --- LOGOUT MODAL LOGIC ---
+            const confirmLogoutFinalBtn = document.getElementById('confirmLogoutFinalBtn');
+            const confirmLogoutModalElement = document.getElementById('confirmLogoutModal');
+
+            if (confirmLogoutModalElement) {
+                const bsModal = new bootstrap.Modal(confirmLogoutModalElement);
+
+                confirmLogoutFinalBtn.addEventListener('click', () => {
+                    bsModal.hide();
+                    console.log("LOG OUT CONFIRMED: User logout process initiated. (Simulated)");
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
