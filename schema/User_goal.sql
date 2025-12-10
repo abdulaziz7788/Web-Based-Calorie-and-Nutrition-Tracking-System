@@ -15,3 +15,17 @@ CREATE TABLE User_goal(
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+
+-- ================================
+-- Notes for Backend Developers
+-- ================================
+/*
+  - The fields target_value and target_unit are designed to work with ANY goal type.
+  - Example: if goal_type = 'STEPS', target_value may represent steps and target_unit may be 'steps' or 'meter'.
+  - If goal_type = 'WEIGHT', target_value may represent kilograms, and so on.
+
+  - IMPORTANT:
+    Backend must implement validation logic using IF statements
+    to ensure that each goal_type receives the correct target_value and target_unit.
+*/
