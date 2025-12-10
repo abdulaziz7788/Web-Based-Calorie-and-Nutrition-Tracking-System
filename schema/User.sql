@@ -1,3 +1,4 @@
+
 CREATE TABLE User(
     user_id int primary key auto_increment,
     email varchar(100) UNIQUE NOT NULL,
@@ -9,12 +10,13 @@ CREATE TABLE User(
     gender ENUM('MALE','FEMALE','OTHER') NOT NULL,
     date_of_birth date NOT NULL,
     CHECK(date_of_birth BETWEEN '1930-01-01' AND '2020-01-01'),
-    current_weight FLOAT,
-    CHECK(current_weight BETWEEN 30 AND 250),
-    height FLOAT,
+    current_weight DECIMAL(5,2) NOT NULL,
+    CHECK(current_weight BETWEEN 25 AND 250),
+    height DECIMAL(5,2) NOT NULL,
     CHECK(height BETWEEN 90 AND 220),
-    activity_level ENUM('not-very-active','lightly-active','active','Very-Active') NOT NULL,
+    activity_level ENUM('not-very-active','lightly-active','active','very-active') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
         ON UPDATE CURRENT_TIMESTAMP
 );
+
