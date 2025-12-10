@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalorieFlow - Settings</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+    <style>
+        /* ---------------------------------------------------- */
+        /* GLOBAL THEME & VARIABLES (From Home_Page.html)        */
+        /* ---------------------------------------------------- */
+        :root {
+            --cf-bg-primary: #051134;
+            /* Deep Blue Background */
+            --cf-navbar-bg: #7ECCC4;
+            /* Light Teal Navbar */
+            --cf-card-bg: #0C1E4F;
+            /* Slightly lighter dark background for cards */
+            --cf-text-light: #f8f9fa;
+            --cf-text-secondary: #adb5bd;
+            --cf-icon-color: #7ECCC4;
+            /* Teal for icons/accents */
+            --cf-border-color: rgba(255, 255, 255, 0.1);
+
+            /* NAVBAR COLORS */
+            --cf-nav-bg: #7ECCC4;
+            --cf-dark-contrast: #27403b;
+            --cf-link-hover-blue: #0d6efd;
+            --cf-link-default: #27403b;
+            --cf-link-hover: #084c48;
+
+            /* DASHBOARD/ACCENT COLORS */
+            --cf-green-progress: #4BB543;
+            --cf-water-color: #0d6efd;
+            --cf-sleep-bad: #dc3545;
+            /* Red for destructive/error */
+            --cf-weight-goal-met: #ffc107;
+            /* Yellow/Orange */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--cf-bg-primary);
+            color: var(--cf-text-light);
+            min-height: 100vh;
+            padding-top: 70px;
+            /* Space for fixed navbar */
+        }
+
+        /* ---------------------------------------------------- */
+        /* NAVBAR SPECIFIC STYLES (From Home_Page.html)          */
+        /* ---------------------------------------------------- */
+        .navbar {
+            background-color: var(--cf-nav-bg) !important;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 20;
+        }
+
+        .logo-text {
+            font-weight: 600;
+            color: var(--cf-dark-contrast);
+            font-size: 1.5rem !important;
+        }
+
+        .nav-link-item {
+            color: var(--cf-link-default) !important;
+            font-weight: 600;
+            margin: 0 1rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            transition: color 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        /* Active state for Settings link */
+        .nav-link-item.active {
+            background-color: rgba(0, 0, 0, 0.2);
+            color: var(--cf-link-hover) !important;
+        }
+
+        .nav-link-item:hover {
+            color: var(--cf-link-hover) !important;
+            background-color: rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+
+        .nav-link-item .material-symbols-outlined {
+            font-size: 20px;
+            margin-right: 6px;
+            font-variation-settings: 'FILL' 0, 'wght' 500;
+            color: inherit;
+        }
+
+        /* --- USER/LOGOUT BUTTON STYLING --- */
+        .user-logout-combo {
+            background-color: transparent;
+            color: var(--cf-dark-contrast) !important;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
+            margin-left: 1rem;
+            text-decoration: none;
+        }
+
+        .user-icon-border {
+            order: 1;
+            margin-left: 8px;
+        }
+
+        .user-logout-combo:hover {
+            background-color: rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+            color: var(--cf-link-hover-blue) !important;
+        }
+
+        .user-logout-combo:hover .user-icon-border,
+        .user-logout-combo:hover .user-icon-border .material-symbols-outlined {
+            color: var(--cf-link-hover-blue) !important;
+            border-color: transparent !important;
+        }
+
+        /* MODAL STYLING */
+        .modal-content-custom {
+            background-color: var(--cf-bg-primary) !important;
+            border: 1px solid var(--cf-nav-bg) !important;
+        }
+
+        .modal-content-custom .btn-close {
+            filter: none;
+            color: var(--cf-sleep-bad);
+            opacity: 1;
+        }
+
+        .interactive-logout-btn {
+            background-color: #dc3545 !important;
+            color: white !important;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            padding: 8px 16px;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .interactive-logout-btn:hover {
+            background-color: #c82333 !important;
+            transform: translateY(-1px) scale(1.02);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ---------------------------------------------------- */
+        /* SETTINGS PAGE SPECIFIC STYLES                        */
+        /* ---------------------------------------------------- */
+        .settings-container {
+            max-width: 900px;
+        }
+
+        .settings-card {
+            background-color: var(--cf-card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid var(--cf-border-color);
+        }
+
+        .settings-card h3 {
+            color: var(--cf-icon-color);
+            font-weight: 700;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        /* Style for form elements (Inputs/Selects) */
+        .form-control,
+        .form-select {
+            /* Ensure base dark background/text color for ALL inputs/selects */
+            background-color: var(--cf-bg-primary) !important;
+            color: var(--cf-text-light) !important;
+            border: 1px solid var(--cf-border-color) !important;
+            border-radius: 6px;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        /* FIX: Ensure FOCUSED and ACTIVE inputs retain the dark background/text color */
+        .form-control:focus,
+        .form-select:focus,
+        .form-control:not(:disabled),
+        .form-select:not(:disabled) {
+            background-color: var(--cf-bg-primary) !important;
+            color: var(--cf-text-light) !important;
+            border-color: var(--cf-icon-color) !important;
+            /* Optional: A nice highlight color */
+        }
+
+        /* Style for disabled inputs */
+        .form-control:disabled,
+        .form-select:disabled,
+        .form-control[readonly] {
+            opacity: 0.7;
+            background-color: var(--cf-card-bg) !important;
+            color: var(--cf-text-secondary) !important;
+            cursor: default;
+            border-color: var(--cf-border-color) !important;
+        }
+
+        /* Added red border for required fields when editing */
+        .form-control.is-invalid,
+        .form-select.is-invalid {
+            border-color: var(--cf-sleep-bad) !important;
+            /* Ensure the box shadow reflects the red border if Bootstrap adds it */
+            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+        }
+
+        .form-label {
+            color: var(--cf-text-secondary);
+            font-weight: 500;
+        }
+
+        /* Edit Toggle Button (Yellow/Orange) */
+        #editProfileBtn {
+            background-color: var(--cf-weight-goal-met);
+            /* Yellow/Orange */
+            color: var(--cf-dark-contrast);
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 20px;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        #editProfileBtn:hover {
+            background-color: #ffb500;
+            transform: scale(1.02);
+        }
+
+        /* Save Changes Button (Green) */
+        #saveChangesBtn {
+            background-color: var(--cf-green-progress) !important;
+            color: var(--cf-bg-primary) !important;
+            font-weight: bold;
+            border-radius: 6px;
+            padding: 8px 20px;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        #saveChangesBtn:hover {
+            background-color: #3e9f38 !important;
+            transform: scale(1.02);
+        }
+
+        /* Modal Cancel Button (Red Outline) */
+        .btn-cancel-modal {
+            background-color: transparent !important;
+            /* FIX: Brighter default red color for better visibility */
+            color: #ff4747 !important;
+            font-weight: 600;
+            border: 1px solid #ff4747;
+            /* Bright Red Border */
+            border-radius: 6px;
+            padding: 8px 16px;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .btn-cancel-modal:hover {
+            /* FIX: Use the darker red for hover effect */
+            background-color: rgba(220, 53, 69, 0.1) !important;
+            color: var(--cf-sleep-bad) !important;
+            /* Keep the original dark red text */
+            border-color: var(--cf-sleep-bad) !important;
+        }
+
+        /* Password Toggle Styling FIXES */
+        .password-input-group {
+            position: relative;
+        }
+
+        .password-toggle-icon {
+            /* Positioned absolutely relative to the input field, aligned to the right */
+            position: absolute;
+            top: 50%;
+            /* FINAL FIX: Adjusted X position */
+            right: 10px;
+            /* FINAL FIX: Calculated height adjustment to center */
+            transform: translateY(35px);
+            /* This value needs to be manually adjusted based on label/input height */
+            cursor: pointer;
+            color: var(--cf-text-secondary);
+            font-size: 1.2rem;
+            transition: color 0.2s;
+            z-index: 10;
+        }
+
+        .password-toggle-icon:hover {
+            color: var(--cf-icon-color);
+        }
+
+        /* Ensure input field has space for the icon */
+        .password-input-group input {
+            padding-right: 40px !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ---------------------------------------------------- -->
+    <!--                       NAVBAR (UPDATED)                           -->
+    <!-- ---------------------------------------------------- -->
+    <nav id="navbar-main" class="navbar navbar-expand-lg">
+        <div
+            class="container-fluid max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 container d-flex justify-content-between align-items-center">
+
+            <!-- Logo - CalorieFlow -->
+            <a class="navbar-brand d-flex align-items-center me-5" href="{{url_for('home')}}">
+                <span class="fw-bold fs-5 logo-text">CalorieFlow</span>
+            </a>
+
+            <!-- Navigation Links -->
+            <div class="d-none d-lg-flex justify-content-end ms-auto me-3">
+                <a class="nav-link-item" href="{{url_for('progress')}}">
+                    <span class="material-symbols-outlined">analytics</span>
+                    Progress
+                </a>
+                <a class="nav-link-item" href="{{url_for('home')}}">
+                    <span class="material-symbols-outlined">home</span>
+                    Home
+                </a>
+                <a class="nav-link-item" href="Meals_Page.html">
+                    <span class="material-symbols-outlined">restaurant</span>
+                    Meals
+                </a>
+                <a class="nav-link-item" href="workout_page.html">
+                    <span class="material-symbols-outlined">fitness_center</span>
+                    Workouts
+                </a>
+                <!-- SETTINGS LINK IS ACTIVE -->
+                <a class="nav-link-item active" href="{{url_for('settings')}}">
+                    <span class="material-symbols-outlined">settings</span>
+                    Settings
+                </a>
+            </div>
+
+            <!-- Log Out Button (ICON/TEXT COMBO) -->
+            <div>
+                <button class="user-logout-combo" id="logoutDirectBtn" data-bs-toggle="modal"
+                    data-bs-target="#confirmLogoutModal" aria-label="Log Out">
+
+                    <!-- Log Out Text -->
+                    <span>Log Out</span>
+
+                    <!-- Log Out Icon -->
+                    <span class="user-icon-border">
+                        <span class="material-symbols-outlined">logout</span>
+                    </span>
+
+                </button>
+            </div>
+        </div>
+    </nav>
+    <!-- ---------------------------------------------------- -->
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+    <!-- ---------------------------------------------------- -->
+    <!--                      SETTINGS CONTENT                 -->
+    <!-- ---------------------------------------------------- -->
+    <div class="container my-5 settings-container">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-white fw-bold mb-0">Account Settings</h1>
+            <!-- Edit/Save Buttons -->
+            <div class="d-flex align-items-center">
+                <button id="editProfileBtn" type="button" class="btn">
+                    Edit Profile
+                </button>
+                <button id="saveChangesBtn" type="submit" form="settingsForm" class="btn ms-3" style="display: none;">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+
+
+        <div class="settings-card">
+
+            <!-- FORM -->
+            <form id="settingsForm" method="POST" action="{{url_for('settings')}}">
+
+                <!-- SECTION 1: IDENTITY & PERSONAL DATA -->
+                <h3 class="text-uppercase" style="color: var(--cf-icon-color);">Personal Profile</h3>
+                <div class="row g-4 mb-5">
+
+                    <!-- First Name (REQUIRED) -->
+                    <div class="col-md-6">
+                        <label for="firstName" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="firstName" value="{{first_name}}" name="first_name" disabled required>
+                    </div>
+                    <!-- Last Name (REQUIRED) -->
+                    <div class="col-md-6">
+                        <label for="lastName" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="lastName" value="{{last_name}}" name="last_name" disabled required>
+                    </div>
+
+                    <!-- Email (REQUIRED) -->
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" value="{{email}}" name="email" disabled
+                            required>
+                    </div>
+
+                    <!-- Date of Birth (REQUIRED) -->
+                    <div class="col-md-6">
+                        <label for="dob" class="form-label">Date of Birth</label>
+                        <input type="date" class="form-control" id="dob" value="{{dob}}" name="dob" disabled required>
+                    </div>
+                    <!-- Gender (REQUIRED) -->
+                    <div class="col-md-6">
+                        <label for="gender" class="form-label">Gender</label>
+                        <select class="form-select" id="gender" value="{{gender}}" name="gender" disabled required>
+                            <option value="" disabled>Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Password Field (Simple field display) -->
+                    <div class="col-12 border-top pt-4 mt-4" style="border-color: var(--cf-border-color) !important;">
+                        <label for="passwordDisplay" class="form-label">Password</label>
+                        <input type="password" class="form-control w-50" id="passwordDisplay" value="********" disabled
+                            readonly>
+
+                        <!-- Change Password Button Trigger (Moved below the field) -->
+                        <button type="button" id="openChangePasswordModalBtn" class="btn btn-sm mt-3"
+                            data-bs-toggle="modal" data-bs-target="#changePasswordModal"
+                            style="background-color: var(--cf-water-color); color: var(--cf-text-light); font-weight: 600; border-radius: 6px; padding: 8px 15px;">
+                            Change Password
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- SEPARATOR LINE -->
+                <hr style="border-top: 3px solid var(--cf-border-color); opacity: 0.5;">
+
+
+                <!-- SECTION 2: HEALTH & GOALS -->
+                <h3 class="text-uppercase mt-5" style="color: var(--cf-weight-goal-met);">Health and Goal Settings</h3>
+                <div class="row g-4 mb-3">
+
+                    <!-- Height (REQUIRED) -->
+                    <div class="col-md-6">
+                        <label for="height" class="form-label">Height (cm)</label>
+                        <input type="number" class="form-control" id="height" value="{{height}}" name="height" min="50" disabled required>
+                    </div>
+                    <!-- Current Weight (REQUIRED) -->
+                    <div class="col-md-6">
+                        <label for="weight" class="form-label">Current Weight (kg)</label>
+                        <input type="number" class="form-control" id="weight" value="{{weight}}" name="weight" step="0.1" min="1" disabled
+                            required>
+                    </div>
+                    <!-- Target Weight (REQUIRED) -->
+                    <div class="col-md-6">
+                        <label for="targetWeight" class="form-label">Target Weight (kg)</label>
+                        <input type="number" class="form-control" id="targetWeight" value="70" step="0.1" min="1"
+                            disabled required>
+                    </div>
+                    <!-- Goal Type (REQUIRED) -->
+                    <div class="col-md-6">
+                        <label for="goalType" class="form-label">Goal Type</label>
+                        <select class="form-select" id="goalType" disabled required>
+                            <option value="lose" selected>Lose Weight</option>
+                            <option value="maintain">Maintain Weight</option>
+                            <option value="gain">Gain Weight</option>
+                        </select>
+                    </div>
+                    <!-- Activity Level (REQUIRED) -->
+                    <div class="col-12">
+                        <label for="activityLevel" class="form-label">Activity Level</label>
+                        <select class="form-select" id="activityLevel" value="{{activity}}" name="activity" disabled required>
+                            <option value="not-very-active">not very active</option>
+                            <option value="lightly-active" selected>lightly active</option>
+                            <option value="active">active</option>
+                            <option value="Very-Active">Very Active</option>
+                        </select>
+                    </div>
+
+                </div>
+            </form>
+
+            <!-- Log Out Button (Fixed at the bottom left) -->
+            <div class="d-flex justify-content-start border-top pt-4 mt-5"
+                style="border-color: var(--cf-border-color) !important;">
+                <button id="logoutBtn" type="button" class="btn interactive-logout-btn" data-bs-toggle="modal"
+                    data-bs-target="#confirmLogoutModal">
+                    Log Out
+                </button>
+            </div>
+
+        </div>
+    </div>
+    <!-- ---------------------------------------------------- -->
+
+    <!-- ---------------------------------------------------- -->
+    <!--          CHANGE PASSWORD MODAL (NEW)                 -->
+    <!-- ---------------------------------------------------- -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header">
+                    <h5 class="modal-title text-white" id="changePasswordModalLabel">Update Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="changePasswordForm" method="POST" action="{{url_for('change_password')}}">
+                    <div class="modal-body">
+
+                        <!-- Current Password Input Group -->
+                        <div class="mb-3 password-input-group">
+                            <label for="currentPasswordInput" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="currentPasswordInput" name="current_password" required>
+                            <!-- Default to visibility_off (hide) -->
+                            <span class="material-symbols-outlined password-toggle-icon"
+                                onclick="togglePasswordVisibility('currentPasswordInput', this)">visibility_off</span>
+                        </div>
+
+                        <!-- New Password Input Group -->
+                        <div class="mb-3 password-input-group">
+                            <label for="newPasswordInput" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="newPasswordInput" name="new_password" required>
+                            <!-- Default to visibility_off (hide) -->
+                            <span class="material-symbols-outlined password-toggle-icon"
+                                onclick="togglePasswordVisibility('newPasswordInput', this)">visibility_off</span>
+                        </div>
+
+                        <!-- Confirm New Password Input Group -->
+                        <div class="mb-3 password-input-group">
+                            <label for="confirmNewPasswordInput" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirmNewPasswordInput" name="confirm_new_password" required>
+                            <!-- Default to visibility_off (hide) -->
+                            <span class="material-symbols-outlined password-toggle-icon"
+                                onclick="togglePasswordVisibility('confirmNewPasswordInput', this)">visibility_off</span>
+                        </div>
+
+                        <!-- Validation Feedback Message -->
+                        <div id="passwordMismatchFeedback" class="text-danger small mt-2" style="display: none;">
+                            Error: New passwords do not match. Please check your entries.
+                        </div>
+
+                    </div>
+                    <!-- FIX: Changed justify-content-end to justify-content-between to align Cancel left -->
+                    <div class="modal-footer d-flex justify-content-between"> 
+                        <button type="button" class="btn btn-cancel-modal" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn interactive-logout-btn"
+                            style="background-color: var(--cf-green-progress) !important;"
+                            id="confirmPasswordChangeBtn">
+                            Confirm Change
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- ---------------------------------------------------- -->
+
+
+    <!-- ---------------------------------------------------- -->
+    <!--          LOGOUT CONFIRMATION MODAL (POP-UP)          -->
+    <!-- ---------------------------------------------------- -->
+    <div class="modal fade" id="confirmLogoutModal" tabindex="-1" aria-labelledby="confirmLogoutModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header">
+                    <h5 class="modal-title text-white" id="confirmLogoutModalLabel">Confirm Log Out</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-secondary">
+                    Are you sure you want to log out of CalorieFlow? You can always sign back in.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <a href="{{url_for('logout')}}">
+                    <button type="button" class="btn interactive-logout-btn" id="confirmLogoutFinalBtn">
+                        Yes, Log Out
+                    </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ---------------------------------------------------- -->
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+
+        // --- GLOBAL FUNCTION FOR PASSWORD TOGGLE (UPDATED LOGIC) ---
+        window.togglePasswordVisibility = function (inputId, iconElement) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                iconElement.textContent = 'visibility'; // Show password (eye icon)
+            } else {
+                input.type = 'password';
+                iconElement.textContent = 'visibility_off'; // Hide password (eye cross icon)
+            }
+        };
+
+        // --- HELPER FUNCTION TO CLEAR PASSWORD ERRORS ---
+        const clearPasswordErrors = () => {
+            document.getElementById('newPasswordInput').classList.remove('is-invalid');
+            document.getElementById('confirmNewPasswordInput').classList.remove('is-invalid');
+            document.getElementById('passwordMismatchFeedback').style.display = 'none';
+        };
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const editProfileBtn = document.getElementById('editProfileBtn');
+            const saveChangesBtn = document.getElementById('saveChangesBtn');
+            const form = document.getElementById('settingsForm');
+            const editableFields = form.querySelectorAll('input:not([readonly]), select');
+            const changePasswordForm = document.getElementById('changePasswordForm');
+            const newPassInput = document.getElementById('newPasswordInput');
+            const confirmNewPassInput = document.getElementById('confirmNewPasswordInput');
+            const feedbackMessage = document.getElementById('passwordMismatchFeedback');
+            const fieldsData = {}; // Store initial state for reset on cancel
+            const changePasswordModalElement = document.getElementById('changePasswordModal');
+
+
+            let isEditing = false;
+
+            // --- 1. CAPTURE INITIAL STATE ---
+            const captureInitialState = () => {
+                editableFields.forEach(field => {
+                    fieldsData[field.id] = field.value;
+                    field.classList.remove('is-invalid'); // Clear validation styles
+                });
+            };
+
+            // --- 2. RESET FORM TO INITIAL STATE ---
+            const resetForm = () => {
+                editableFields.forEach(field => {
+                    field.value = fieldsData[field.id];
+                    field.classList.remove('is-invalid');
+                });
+            };
+
+            // --- 3. VALIDATE REQUIRED FIELDS (Profile) ---
+            const validateForm = () => {
+                let isValid = true;
+                editableFields.forEach(field => {
+                    // We only validate if the field is visible (i.e., not disabled during edit mode, even though Bootstrap handles the submission flow for required fields)
+                    if (!field.disabled && field.hasAttribute('required')) {
+                        if (field.value.trim() === '' || (field.tagName === 'SELECT' && field.value === '')) {
+                            field.classList.add('is-invalid');
+                            isValid = false;
+                        } else {
+                            field.classList.remove('is-invalid');
+                        }
+                    }
+                });
+                return isValid;
+            };
+
+            // --- 4. FUNCTION TO TOGGLE EDIT MODE ---
+            const toggleEditMode = (enable) => {
+                isEditing = enable;
+
+                editableFields.forEach(field => {
+                    field.disabled = !enable;
+                });
+
+                if (enable) {
+                    // Entering Edit Mode: Change button to Cancel, show Save button
+                    editProfileBtn.textContent = 'Cancel Edit';
+                    editProfileBtn.classList.remove('btn-secondary');
+                    editProfileBtn.classList.add('interactive-logout-btn');
+                    editProfileBtn.style.backgroundColor = 'var(--cf-sleep-bad)';
+                    editProfileBtn.style.color = 'var(--cf-text-light)';
+                    saveChangesBtn.style.display = 'block';
+                } else {
+                    // Exiting Edit Mode: Restore button to Edit, hide Save button
+                    editProfileBtn.textContent = 'Edit Profile';
+                    editProfileBtn.classList.remove('interactive-logout-btn');
+                    editProfileBtn.style.backgroundColor = 'var(--cf-weight-goal-met)';
+                    editProfileBtn.style.color = 'var(--cf-dark-contrast)';
+                    saveChangesBtn.style.display = 'none';
+                    // Clear any remaining validation warnings
+                    editableFields.forEach(field => field.classList.remove('is-invalid'));
+                }
+            };
+
+
+            // --- INITIALIZATION ---
+            captureInitialState(); // Capture current mock values
+            toggleEditMode(false); // Ensure starting state is read-only
+
+
+            // --- EVENT LISTENERS ---
+
+            // Toggle edit mode (Edit Profile / Cancel Edit)
+            editProfileBtn.addEventListener('click', () => {
+                if (isEditing) {
+                    // If currently editing, pressing this acts as CANCEL
+                    resetForm();
+                }
+                // Toggle mode regardless (resetForm() runs before the toggle logic changes the state)
+                toggleEditMode(!isEditing);
+            });
+
+            // Handle Save Changes
+            saveChangesBtn.addEventListener('click', () => {
+                if (validateForm()) {
+                    form.submit();
+                }
+            });
+
+            // Handle Password Change Submission (Updated Validation)
+
+
+            // Clear errors when typing in the modal
+            newPassInput.addEventListener('input', clearPasswordErrors);
+            confirmNewPassInput.addEventListener('input', clearPasswordErrors);
+
+            // Optional: Reset password modal form and visibility when the modal is hidden (Cancel/Close X)
+            changePasswordModalElement.addEventListener('hidden.bs.modal', function () {
+                
+                clearPasswordErrors();
+                // Ensure all fields revert to 'password' type and 'visibility_off' icon
+                document.querySelectorAll('.password-input-group input[type="text"]').forEach(input => {
+                    input.type = 'password';
+                });
+                document.querySelectorAll('.password-toggle-icon[data-bs-modal]').forEach(icon => {
+                    icon.textContent = 'visibility_off';
+                });
+            });
+
+
+            // 5. Log Out Modal Logic 
+            const confirmLogoutFinalBtn = document.getElementById('confirmLogoutFinalBtn');
+            const confirmLogoutModalElement = document.getElementById('confirmLogoutModal');
+
+            if (confirmLogoutModalElement) {
+                const bsModal = new bootstrap.Modal(confirmLogoutModalElement);
+
+                confirmLogoutFinalBtn.addEventListener('click', () => {
+                    bsModal.hide();
+                    console.log("LOG OUT CONFIRMED: User logout process initiated. (Simulated)");
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

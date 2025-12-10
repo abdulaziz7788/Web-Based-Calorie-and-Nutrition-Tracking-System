@@ -4,7 +4,8 @@ from datetime import datetime
 
 class User:
 
-    def __init__(self, email, first_name, last_name, gender, dob, weight, height, activity):
+    def __init__(self, user_id, email, first_name, last_name, gender, dob, weight, height, activity):
+        self.user_id = user_id
         self.email = email
         self.first_name = first_name
         self.last_name = last_name
@@ -17,15 +18,16 @@ class User:
     @classmethod
     def get_user_by_id(cls, user_id):
         sql = """
-        SELECT email, first_name, last_name, gender, date_of_birth, current_weight, height, activity_level
+        SELECT user_id, email, first_name, last_name, gender, date_of_birth, current_weight, height, activity_level
         FROM user
         WHERE user_id = %s
         """
         cursor.execute(sql, (user_id,))
         result = cursor.fetchone()
         if result:
-            email, first_name, last_name, gender, dob, weight, height, activity = result
+            user_id, email, first_name, last_name, gender, dob, weight, height, activity = result
             return cls(
+                user_id=user_id,
                 email=email,
                 first_name=first_name,
                 last_name=last_name,
@@ -99,3 +101,17 @@ class User:
 
         tdee = bmr * multiplier
         return round(tdee, 2)
+    
+    def check_password(self, password):
+        sql = "SELECT password_hash FROM user WHERE user_id=%s"
+        cursor.execute(sql, (self.user_id,))
+        result = cursor.fetchone()
+
+        if not result:
+            return False
+
+        stored_hash = result[0]
+        input_hash = hashlib.sha256(password.encode()).hexdigest()
+        return input_hash == stored_hash
+
+

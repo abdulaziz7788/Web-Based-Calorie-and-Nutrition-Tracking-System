@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalorieFlow - Progress Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,600;1,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+    <style>
+        /* ---------------------------------------------------- */
+        /* GLOBAL THEME & VARIABLES (Consistent across app)      */
+        /* ---------------------------------------------------- */
+        :root {
+            --cf-bg-primary: #051134;
+            /* Deep Blue Background */
+            --cf-navbar-bg: #7ECCC4;
+            /* Light Teal Navbar */
+            --cf-card-bg: #0C1E4F;
+            /* Slightly lighter dark background for cards */
+            --cf-text-light: #f8f9fa;
+            --cf-text-secondary: #adb5bd;
+            --cf-icon-color: #7ECCC4;
+            /* Teal for icons/accents */
+            --cf-border-color: rgba(255, 255, 255, 0.1);
+
+            /* NAVBAR COLORS */
+            --cf-nav-bg: #7ECCC4;
+            --cf-dark-contrast: #27403b;
+            --cf-link-hover-blue: #0d6efd;
+            --cf-link-default: #27403b;
+            --cf-link-hover: #084c48;
+
+            /* ACCENT COLORS */
+            --cf-green-progress: #4BB543;
+            /* Green for success (Net Calories, Weight) */
+            --cf-water-color: #0d6efd;
+            /* Blue for highlights/links (Consumed Calories) */
+            --cf-sleep-bad: #dc3545;
+            /* Red for destructive/error (Burned Calories) */
+            --cf-weight-goal-met: #ffc107;
+            /* Yellow/Orange (Sleep) */
+
+            /* MACRO COLORS */
+            --cf-protein: #0d6efd; /* Blue */
+            --cf-carbs: #ffc107; /* Yellow */
+            --cf-fat: #dc3545; /* Red */
+            --cf-sugar: #8a2be2; /* Purple (New) */
+            --cf-fiber: #4BB543; /* Green (New) */
+
+
+            /* BUTTON COLORS (Match Meals Page) */
+            --cf-meal-add-bg: #8BC4BE;
+            --cf-meal-add-hover: #6e9b95;
+            --cf-meal-add-color: var(--cf-bg-primary);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--cf-bg-primary);
+            color: var(--cf-text-light);
+            min-height: 100vh;
+            padding-top: 70px;
+            /* Space for fixed navbar */
+        }
+
+        /* ---------------------------------------------------- */
+        /* NAVBAR & LOGOUT MODAL STYLES */
+        /* ---------------------------------------------------- */
+        .navbar {
+            background-color: var(--cf-nav-bg) !important;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 20;
+        }
+
+        .logo-text {
+            font-weight: 600;
+            color: var(--cf-dark-contrast);
+            font-size: 1.5rem !important;
+        }
+
+        .nav-link-item {
+            color: var(--cf-link-default) !important;
+            font-weight: 600;
+            margin: 0 1rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            transition: color 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .nav-link-item.active {
+            background-color: rgba(0, 0, 0, 0.2);
+            color: var(--cf-link-hover) !important;
+        }
+
+        .nav-link-item:hover {
+            color: var(--cf-link-hover) !important;
+            background-color: rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+
+        .nav-link-item .material-symbols-outlined {
+            font-size: 20px;
+            margin-right: 6px;
+            font-variation-settings: 'FILL' 0, 'wght' 500;
+            color: inherit;
+        }
+
+        .user-logout-combo {
+            background-color: transparent;
+            color: var(--cf-dark-contrast) !important;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
+            margin-left: 1rem;
+            text-decoration: none;
+        }
+
+        .user-icon-border {
+            order: 1;
+            margin-left: 8px;
+        }
+
+        .user-logout-combo:hover {
+            background-color: rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+            color: var(--cf-link-hover-blue) !important;
+        }
+
+        .user-logout-combo:hover .user-icon-border,
+        .user-logout-combo:hover .user-icon-border .material-symbols-outlined {
+            color: var(--cf-link-hover-blue) !important;
+            border-color: transparent !important;
+        }
+
+        /* MODAL STYLING (Fixed) */
+        .modal-content-custom {
+            background-color: var(--cf-bg-primary) !important;
+            border: 1px solid var(--cf-nav-bg) !important;
+        }
+        
+        /* Ensure Logout Modal Header is visible */
+        #confirmLogoutModal .modal-header {
+             border-bottom: 1px solid var(--cf-border-color);
+        }
+        
+        #confirmLogoutModal .modal-header .modal-title {
+            color: var(--cf-text-light) !important;
+        }
+        
+        #confirmLogoutModal .btn-close {
+            /* Fixes the 'X' button color for dark backgrounds */
+            filter: invert(1); 
+        }
+
+        .interactive-logout-btn {
+            background-color: #dc3545 !important;
+            color: white !important;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            padding: 8px 16px;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .interactive-logout-btn:hover {
+            background-color: #c82333 !important;
+            transform: translateY(-1px) scale(1.02);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ---------------------------------------------------- */
+        /* DASHBOARD SPECIFIC STYLES                            */
+        /* ---------------------------------------------------- */
+
+        .dashboard-container {
+            max-width: 1200px;
+        }
+
+        .chart-card {
+            background-color: var(--cf-card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--cf-border-color);
+            margin-bottom: 30px;
+        }
+
+        .chart-card h4 {
+            color: var(--cf-icon-color);
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Tooltip Container Styles */
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        .tooltip-box {
+            visibility: hidden;
+            background-color: var(--cf-bg-primary);
+            color: var(--cf-text-light);
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            /* Position above the icon */
+            left: 50%;
+            margin-left: -150px;
+            /* Center tooltip relative to icon */
+            width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--cf-icon-color);
+            font-size: 0.85rem;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .tooltip-container:hover .tooltip-box {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Info Icon Style */
+        .info-icon {
+            font-size: 18px;
+            color: var(--cf-text-secondary);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .info-icon:hover {
+            color: var(--cf-icon-color);
+        }
+
+        /* Global Chart.js Font Styling Override */
+        canvas {
+            color: var(--cf-text-light) !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+
+        /* FIX: Custom Legend Styling (Applied via JavaScript Plugin) */
+        .chart-legend-container {
+            margin-bottom: 20px;
+            padding-top: 10px;
+            /* Ensure alignment for legend items */
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            /* Added for responsiveness */
+        }
+
+        .chart-legend-item {
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            margin-right: 15px;
+            margin-bottom: 5px;
+            /* Added for responsiveness */
+            display: inline-flex;
+            align-items: center;
+            font-weight: 600; /* Made text bolder for visibility with data */
+        }
+
+        .chart-legend-item:hover {
+            transform: scale(1.03);
+            /* Pop effect */
+            opacity: 0.85;
+            /* Darken effect */
+        }
+        
+        .chart-legend-value {
+            font-weight: 700;
+            margin-left: 5px;
+            color: var(--cf-text-light);
+        }
+
+        /* Summary Box for top-level metrics */
+        .progress-summary-box {
+            background-color: var(--cf-card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid var(--cf-border-color);
+        }
+
+        .progress-summary-box .data-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--cf-text-light);
+        }
+
+        .progress-summary-box .data-label {
+            color: var(--cf-text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        /* Navigation/Selector Styles */
+        .btn-nav-week {
+            background-color: var(--cf-card-bg);
+            color: var(--cf-text-light);
+            border: 1px solid var(--cf-border-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-nav-week:hover {
+            background-color: rgba(12, 30, 79, 0.8);
+            border-color: var(--cf-icon-color);
+        }
+
+        /* Style for the week display text (New) */
+        #weekRangeDisplay {
+            min-width: 300px;
+            /* Ensure enough width for the date range text */
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ---------------------------------------------------- -->
+    <!--                       NAVBAR                           -->
+    <!-- ---------------------------------------------------- -->
+    <nav id="navbar-main" class="navbar navbar-expand-lg">
+        <div
+            class="container-fluid max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 container d-flex justify-content-between align-items-center">
+
+            <!-- Logo - CalorieFlow -->
+            <a class="navbar-brand d-flex align-items-center me-5" href="{{url_for('home')}}">
+                <span class="fw-bold fs-5 logo-text">CalorieFlow</span>
+            </a>
+
+            <!-- Navigation Links -->
+            <div class="d-none d-lg-flex justify-content-end ms-auto me-3">
+                <!-- Progress Dashboard is active -->
+                <a class="nav-link-item active" href="{{url_for('progress')}}">
+                    <span class="material-symbols-outlined">analytics</span>
+                    Progress
+                </a>
+                <a class="nav-link-item" href="{{url_for('home')}}">
+                    <span class="material-symbols-outlined">home</span>
+                    Home
+                </a>
+                <a class="nav-link-item" href="Meals_Page.html">
+                    <span class="material-symbols-outlined">restaurant</span>
+                    Meals
+                </a>
+                <a class="nav-link-item" href="workout_page.html">
+                    <span class="material-symbols-outlined">fitness_center</span>
+                    Workouts
+                </a>
+                <a class="nav-link-item" href="{{url_for('settings')}}">
+                    <span class="material-symbols-outlined">settings</span>
+                    Settings
+                </a>
+            </div>
+
+            <!-- Log Out Button (ICON/TEXT COMBO) -->
+            <div>
+                <button class="user-logout-combo" id="logoutDirectBtn" data-bs-toggle="modal"
+                    data-bs-target="#confirmLogoutModal" aria-label="Log Out">
+
+                    <!-- Log Out Text -->
+                    <span>Log Out</span>
+
+                    <!-- Log Out Icon -->
+                    <span class="user-icon-border">
+                        <span class="material-symbols-outlined">logout</span>
+                    </span>
+
+                </button>
+            </div>
+        </div>
+    </nav>
+    <!-- ---------------------------------------------------- -->
+
+
+    <!-- ---------------------------------------------------- -->
+    <!--                      MAIN CONTENT (DASHBOARD)        -->
+    <!-- ---------------------------------------------------- -->
+    <div class="container my-5 dashboard-container">
+
+        <h1 class="text-white fw-bold mb-4">Weekly Progress & Analytics</h1>
+
+        <!-- Date Navigation Controls -->
+        <div class="d-flex justify-content-center align-items-center mb-5">
+            <button class="btn btn-nav-week" id="prevWeekBtn">
+                <span class="material-symbols-outlined">arrow_back_ios_new</span> Previous Week
+            </button>
+
+            <!-- Replaced dropdown with a static display for the current week -->
+            <h3 class="text-white fw-bold mb-0 mx-4 text-center" id="weekRangeDisplay">Loading Week...</h3>
+
+            <button class="btn btn-nav-week" id="nextWeekBtn">
+                Next Week <span class="material-symbols-outlined">arrow_forward_ios</span>
+            </button>
+        </div>
+
+
+        <!-- Top Summary Boxes - Adjusted to use col-lg-4 instead of col-lg-3 for 3 columns -->
+        <div class="row g-4 mb-5">
+            <div class="col-lg-4 col-md-6">
+                <div class="progress-summary-box">
+                    <span class="material-symbols-outlined"
+                        style="color: var(--cf-water-color); font-size: 28px;">water_drop</span>
+                    <div class="data-value" id="totalWater">10.5 L</div>
+                    <div class="data-label">Total Water Intake</div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="progress-summary-box">
+                    <span class="material-symbols-outlined"
+                        style="color: var(--cf-icon-color); font-size: 28px;">dark_mode</span>
+                    <div class="data-value" id="avgSleep">7h 15m</div>
+                    <div class="data-label">Avg. Sleep Per Night</div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="progress-summary-box">
+                    <span class="material-symbols-outlined"
+                        style="color: var(--cf-green-progress); font-size: 28px;">trending_down</span>
+                    <div class="data-value" id="weightChange">-0.8 kg</div>
+                    <div class="data-label">Weekly Weight Change</div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row">
+
+            <!-- Chart 1: Daily Calorie Consumption & Burn (Bar Chart - Full Width) -->
+            <div class="col-lg-12">
+                <div class="chart-card">
+                    <h4>
+                        Daily Calorie Balance (Consumed vs. Burned vs. Net)
+                        <div class="tooltip-container">
+                            <span class="material-symbols-outlined info-icon">info</span>
+                            <div class="tooltip-box">
+                                <strong>Net Calories are Key!</strong>
+                                <p class="mb-1 mt-2">This chart shows your net calorie balance each day (Consumed -
+                                    Burned). The green bar represents the final net surplus or deficit.</p>
+                                <p class="mb-1">**Tip:** Click on a legend item (e.g., "Consumed") to toggle that data
+                                    series on or off and focus on specific metrics.</p>
+                                <p class="mb-0">Color Key: <span style="color: var(--cf-water-color);">Consumed</span> |
+                                    <span style="color: var(--cf-sleep-bad);">Burned</span> | <span
+                                        style="color: var(--cf-green-progress);">Net</span></p>
+                            </div>
+                        </div>
+                    </h4>
+                    <!-- Custom Legend Container -->
+                    <div class="chart-legend-container"></div>
+                    <canvas id="calorieBalanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 2: Weight Trend (Line Chart - Half Width) -->
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <h4>
+                        Weight Trend (Last 7 Days)
+                        <div class="tooltip-container">
+                            <span class="material-symbols-outlined info-icon">info</span>
+                            <div class="tooltip-box">
+                                <strong>Tracking Consistency</strong>
+                                <p class="mb-1 mt-2">This chart tracks your morning weight over the last week. The trend
+                                    line (Green) indicates your progress toward your long-term goal.</p>
+                                <p class="mb-0">**Tip:** Track your weight at the same time each day for the most
+                                    accurate trend visualization.</p>
+                            </div>
+                        </div>
+                    </h4>
+                    <canvas id="weightTrendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 3: Water and Sleep Consistency (Bar Chart - Half Width) -->
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <h4>
+                        Water and Sleep Consistency
+                        <div class="tooltip-container">
+                            <span class="material-symbols-outlined info-icon">info</span>
+                            <div class="tooltip-box">
+                                <strong>Hydration & Recovery</strong>
+                                <p class="mb-1 mt-2">This dual-axis chart compares your daily water intake (Teal, left
+                                    axis) against your hours of sleep (Yellow, right axis).</p>
+                                <p class="mb-0">**Tip:** Click the legend items to view only water or only sleep totals.
+                                </p>
+                            </div>
+                        </div>
+                    </h4>
+                    <!-- Custom Legend Container -->
+                    <div class="chart-legend-container" id="consistencyLegendContainer"></div>
+                    <canvas id="consistencyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- CHART 4: Macro Totals Doughnut Chart (Total Grams) -->
+            <div class="col-lg-12">
+                <div class="chart-card">
+                    <h4>
+                        Total Weekly Macro Intake (Grams)
+                        <div class="tooltip-container">
+                            <span class="material-symbols-outlined info-icon">info</span>
+                            <div class="tooltip-box">
+                                <strong>Absolute Macro Totals</strong>
+                                <p class="mb-1 mt-2">This chart shows the total grams consumed for Protein, Carbs, Fat, Sugar, and Fiber across the selected 7-day period.</p>
+                                <p class="mb-0">**Tip:** While this is visually a ratio, the labels represent the absolute total grams tracked, not a percentage split.</p>
+                            </div>
+                        </div>
+                    </h4>
+                    <div class="chart-legend-container" id="macroLegendContainer"></div>
+                    <div style="max-width: 500px; margin: 0 auto;">
+                        <canvas id="macroSplitChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+    </div>
+    <!-- ---------------------------------------------------- -->
+
+
+    <!-- ---------------------------------------------------- -->
+    <!--          LOGOUT CONFIRMATION MODAL (POP-UP) (FIXED)    -->
+    <!-- ---------------------------------------------------- -->
+    <div class="modal fade" id="confirmLogoutModal" tabindex="-1" aria-labelledby="confirmLogoutModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header">
+                    <!-- FIXED: Ensure modal title is visible against the dark background -->
+                    <h5 class="modal-title" id="confirmLogoutModalLabel" style="color: var(--cf-text-light);">Confirm Log Out</h5>
+                    <!-- FIXED: Ensure close button (X) is visible against the dark background -->
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
+                </div>
+                <div class="modal-body text-secondary">
+                    Are you sure you want to log out of CalorieFlow? You can always sign back in.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <a href="{{url_for('logout')}}">
+                    <button type="button" class="btn interactive-logout-btn">
+                        Yes, Log Out
+                    </button>
+                        </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ---------------------------------------------------- -->
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Set Chart.js global defaults for dark theme
+        Chart.defaults.color = 'var(--cf-text-secondary)';
+        Chart.defaults.font.family = 'Inter, sans-serif';
+
+        // --- CHART LEGEND PLUGIN FOR COLOR CODING & INTERACTIVITY ---
+        const colorCodedLegendPlugin = {
+            id: 'colorCodedLegend',
+            afterUpdate: (chart) => {
+                // Determine the correct legend container based on chart ID
+                let legendDiv;
+                if (chart.canvas.id === 'calorieBalanceChart') {
+                    legendDiv = chart.canvas.parentNode.querySelector('.chart-legend-container');
+                } else if (chart.canvas.id === 'consistencyChart') {
+                    legendDiv = document.getElementById('consistencyLegendContainer');
+                } else if (chart.canvas.id === 'macroSplitChart') {
+                    legendDiv = document.getElementById('macroLegendContainer');
+                }
+
+                // Check if the custom legend container exists and customization is requested
+                if (legendDiv && chart.options.plugins.legend.colorCode === true) {
+                    legendDiv.innerHTML = ''; // Clear previous content
+
+                    // Use Chart.js internal method to get legend items
+                    const items = chart.options.plugins.legend.labels.generateLabels(chart);
+                    
+                    // Retrieve the data array for the macro chart
+                    const macroData = chart.canvas.id === 'macroSplitChart' ? chart.data.datasets[0].data : null;
+
+
+                    items.forEach((item, index) => {
+                        const dataset = chart.data.datasets[item.datasetIndex];
+                        // Determine the color based on the dataset's background/border color
+                        const color = item.fillStyle || item.strokeStyle || 'white';
+                        const isHidden = item.hidden; 
+
+                        const legendItem = document.createElement('div');
+                        legendItem.className = `chart-legend-item`;
+                        legendItem.style.opacity = isHidden ? '0.4' : '1';
+                        legendItem.style.pointerEvents = 'auto'; // Ensure clickability
+
+                        // Click handler to toggle dataset visibility
+                        legendItem.onclick = () => {
+                            if (chart.config.type === 'doughnut' || chart.config.type === 'pie') {
+                                // For Doughnut chart, toggle the data point visibility
+                                chart.toggleDataVisibility(item.index);
+                            } else {
+                                // For other charts, toggle the whole dataset
+                                chart.setDatasetVisibility(item.datasetIndex, !chart.isDatasetVisible(item.datasetIndex));
+                            }
+                            chart.update();
+                        };
+
+                        // Create colored square
+                        const colorSquare = document.createElement('span');
+                        colorSquare.style.backgroundColor = color;
+                        colorSquare.style.width = '12px';
+                        colorSquare.style.height = '12px';
+                        colorSquare.style.borderRadius = chart.config.type === 'doughnut' ? '50%' : '3px';
+                        colorSquare.style.marginRight = '8px';
+
+                        // Create colored text (Text color matches the item's color)
+                        const text = document.createElement('span');
+                        text.style.color = color;
+                        
+                        // Set the text content, including the value for the macro chart
+                        if (chart.canvas.id === 'macroSplitChart' && macroData) {
+                            // Extract just the macro name from the label (e.g., "Protein")
+                            const macroName = item.text.replace(/\s\(g\)/, '');
+                            const macroValue = macroData[item.index];
+                            
+                            // Display: "Protein: 1100g"
+                            text.innerHTML = `${macroName}: <span class="chart-legend-value">${macroValue}g</span>`;
+                        } else {
+                            // Default display for other charts: just the label
+                            text.textContent = item.text;
+                        }
+
+
+                        legendItem.appendChild(colorSquare);
+                        legendItem.appendChild(text);
+                        legendDiv.appendChild(legendItem);
+                    });
+                }
+            }
+        };
+
+
+        // --- GLOBAL STATE FOR DATE TRACKING ---
+        let currentWeekStartDate = new Date();
+
+        // Helper to format date label (e.g., Dec 1)
+        const formatDateLabel = (date) => {
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        };
+
+        // Helper to generate the week range string (e.g., Dec 1, 2025 - Dec 7, 2025)
+        const getWeekRangeString = (startDate) => {
+            const endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+
+            const startLabel = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const endLabel = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            return `${startLabel} - ${endLabel}`;
+        };
+
+        // Helper function to check if a given date (which is a week start) is the current calendar week
+        const isCurrentCalendarWeek = (dateToCheck) => {
+            const today = new Date();
+            // Start of today's week (Sunday, 00:00:00)
+            const currentWeekStart = new Date(today);
+            currentWeekStart.setHours(0, 0, 0, 0);
+            currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay());
+
+            const dateStart = new Date(dateToCheck);
+            dateStart.setHours(0, 0, 0, 0);
+
+            // Check if the starting date of the requested week is the starting date of the current calendar week
+            return dateStart.getTime() === currentWeekStart.getTime();
+        };
+
+        // Helper function to generate mock historical data (7 days)
+        const generateWeeklyData = (startDate) => {
+            const labels = [];
+            const consumed = [];
+            const burned = [];
+            const net = [];
+            const weight = [];
+            const water = [];
+            const sleep = [];
+
+            // Macro Data Totals (P/C/F/S/Fi in grams)
+            let totalProtein = 0;
+            let totalCarbs = 0;
+            let totalFat = 0;
+            let totalSugar = 0; 
+            let totalFiber = 0; 
+
+            // Check if we are simulating the current calendar week
+            const isCurrentWeek = isCurrentCalendarWeek(startDate);
+
+            const startWeight = 73.5;
+            const weightChange = 0.1;
+
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(startDate);
+                d.setDate(startDate.getDate() + i);
+
+                labels.push(formatDateLabel(d));
+
+                if (isCurrentWeek) {
+                    const c = Math.round(2000 + Math.random() * 500 - 250);
+                    const b = Math.round(300 + Math.random() * 300);
+
+                    consumed.push(c);
+                    burned.push(b);
+                    net.push(c - b);
+
+                    // Macro accumulation
+                    const p = Math.round(80 + Math.random() * 20);
+                    const ca = Math.round(150 + Math.random() * 50);
+                    const f = Math.round(40 + Math.random() * 15);
+                    const s = Math.round(60 + Math.random() * 30);
+                    const fi = Math.round(20 + Math.random() * 10);
+                    
+                    totalProtein += p;
+                    totalCarbs += ca;
+                    totalFat += f;
+                    totalSugar += s;
+                    totalFiber += fi;
+
+                    // Weight trend based on the week index (i)
+                    weight.push(parseFloat((startWeight - i * weightChange).toFixed(1)));
+
+                    water.push(Math.round(1500 + Math.random() * 1000));
+                    sleep.push(Math.round(6 + Math.random() * 3));
+                } else {
+                    // Data for past/future weeks (Simulate zero recorded data or null for missing measurements)
+                    consumed.push(0);
+                    burned.push(0);
+                    net.push(0);
+                    weight.push(null);
+                    water.push(0);
+                    sleep.push(0);
+                }
+            }
+
+            const macroTotals = {
+                protein: totalProtein,
+                carbs: totalCarbs,
+                fat: totalFat,
+                sugar: totalSugar,
+                fiber: totalFiber,
+            };
+
+
+            return { labels, consumed, burned, net, weight, water, sleep, macroTotals };
+        };
+
+        // --- WEEKLY NAVIGATION LOGIC ---
+        const loadWeek = (offsetDays) => {
+            // Calculate the new start date
+            const newStartDate = new Date(currentWeekStartDate);
+            newStartDate.setDate(currentWeekStartDate.getDate() + offsetDays);
+
+            currentWeekStartDate = newStartDate;
+
+            // Generate data for the new week (simulating API call)
+            const weekData = generateWeeklyData(currentWeekStartDate);
+
+            // Redraw charts
+            updateCharts(weekData);
+
+            // Update the display element with the new week range
+            const displayElement = document.getElementById('weekRangeDisplay');
+            if (displayElement) {
+                displayElement.textContent = getWeekRangeString(currentWeekStartDate);
+            }
+
+            // Update summary boxes with generic values for non-current weeks
+            const isCurrentWeek = isCurrentCalendarWeek(currentWeekStartDate);
+
+            // NOTE: Summary values are simple mock text, they don't derive from the zero data points
+            document.getElementById('totalWater').textContent = isCurrentWeek ? '10.5 L' : '0.0 L';
+            document.getElementById('avgSleep').textContent = isCurrentWeek ? '7h 15m' : '0h 0m';
+            document.getElementById('weightChange').textContent = isCurrentWeek ? '-0.8 kg' : '0.0 kg';
+        };
+
+        // --- CHART RENDERING LOGIC ---
+        let calorieBalanceChart, weightTrendChart, consistencyChart, macroSplitChart;
+
+        const updateCharts = (data) => {
+            const getCssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+            // Define colors using CSS variables
+            const colorConsumed = getCssVar('--cf-water-color'); 
+            const colorBurned = getCssVar('--cf-sleep-bad'); 
+            const colorNet = getCssVar('--cf-green-progress'); 
+            const colorWeight = getCssVar('--cf-green-progress'); 
+            const colorWater = getCssVar('--cf-icon-color'); 
+            const colorSleep = getCssVar('--cf-weight-goal-met'); 
+            const colorGrid = getCssVar('--cf-border-color');
+            const colorTicks = getCssVar('--cf-text-light');
+
+            const colorProtein = getCssVar('--cf-protein');
+            const colorCarbs = getCssVar('--cf-carbs');
+            const colorFat = getCssVar('--cf-fat');
+            const colorSugar = getCssVar('--cf-sugar'); 
+            const colorFiber = getCssVar('--cf-fiber');
+
+
+            const chartConfig = [
+                // 1. Calorie Balance Chart (Bar: Consumed, Burned, Net)
+                {
+                    id: 'calorieBalanceChart', type: 'bar', chart: calorieBalanceChart,
+                    data: {
+                        labels: data.labels,
+                        datasets: [
+                            {
+                                label: 'Consumed (kcal)',
+                                data: data.consumed,
+                                backgroundColor: colorConsumed,
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Burned (kcal)',
+                                data: data.burned,
+                                backgroundColor: colorBurned,
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Net (Consumed - Burned)',
+                                data: data.net, 
+                                backgroundColor: colorNet,
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: colorTicks }
+                            },
+                            y: {
+                                beginAtZero: true, 
+                                grid: { color: colorGrid },
+                                ticks: { color: colorTicks }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false, colorCode: true },
+                        },
+                        layout: { padding: { top: 10 } }
+                    }
+                },
+                // 2. Weight Trend Chart
+                {
+                    id: 'weightTrendChart', type: 'line', chart: weightTrendChart,
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Weight (kg)', data: data.weight, borderColor: colorWeight,
+                            backgroundColor: 'rgba(75, 181, 67, 0.2)', borderWidth: 3, tension: 0.4, pointRadius: 6, pointBackgroundColor: colorWeight,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                reverse: true,
+                                grid: { color: colorGrid },
+                                ticks: { color: colorTicks },
+                                // Dynamically set min/max only if there is data
+                                min: data.weight.every(val => val === null) ? undefined : Math.min(...data.weight.filter(val => val !== null)) - 1,
+                                max: data.weight.every(val => val === null) ? undefined : Math.max(...data.weight.filter(val => val !== null)) + 1,
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: colorTicks }
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                },
+                // 3. Consistency Chart
+                {
+                    id: 'consistencyChart', type: 'bar', chart: consistencyChart,
+                    data: {
+                        labels: data.labels,
+                        datasets: [
+                            { label: 'Water (ml)', data: data.water, backgroundColor: colorWater, yAxisID: 'y1', borderRadius: 4 },
+                            { label: 'Sleep (hours)', data: data.sleep, backgroundColor: colorSleep, yAxisID: 'y2', borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: colorTicks } },
+                            y1: {
+                                type: 'linear', position: 'left', beginAtZero: true, 
+                                max: 3000,
+                                title: { display: true, text: 'Water (ml)', color: colorWater },
+                                grid: { color: colorGrid },
+                                ticks: { color: colorTicks }
+                            },
+                            y2: {
+                                type: 'linear', position: 'right', beginAtZero: true, 
+                                max: 12,
+                                title: { display: true, text: 'Sleep (hours)', color: colorSleep },
+                                grid: { display: false },
+                                ticks: { color: colorTicks }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false, colorCode: true },
+                        },
+                        layout: { padding: { top: 10 } }
+                    }
+                },
+                // 4. Macro Totals Chart (Doughnut - showing total grams)
+                {
+                    id: 'macroSplitChart', type: 'doughnut', chart: macroSplitChart,
+                    data: {
+                        labels: ['Protein (g)', 'Carbohydrates (g)', 'Fat (g)', 'Sugar (g)', 'Fiber (g)'],
+                        datasets: [{
+                            label: 'Macro Totals (g)', 
+                            data: [
+                                data.macroTotals.protein, 
+                                data.macroTotals.carbs, 
+                                data.macroTotals.fat,
+                                data.macroTotals.sugar,
+                                data.macroTotals.fiber
+                            ],
+                            backgroundColor: [colorProtein, colorCarbs, colorFat, colorSugar, colorFiber],
+                            hoverOffset: 10,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        cutout: '70%', // Makes it a doughnut chart
+                        plugins: {
+                            legend: { display: false, colorCode: true }, 
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            // Clean up the label for the tooltip (e.g., remove '(g)')
+                                            label = label.replace(/\s\(g\)/, ''); 
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            // Show absolute value in grams (G)
+                                            label += context.formattedValue + 'g'; 
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            ];
+
+            chartConfig.forEach(config => {
+                if (!config.chart) {
+                    // Initialize chart if it doesn't exist
+                    config.chart = new Chart(document.getElementById(config.id), {
+                        type: config.type,
+                        data: config.data,
+                        options: { responsive: true, ...config.options },
+                        // Determine which charts use the custom legend plugin
+                        plugins: (config.id === 'calorieBalanceChart' || config.id === 'consistencyChart' || config.id === 'macroSplitChart') ? [colorCodedLegendPlugin] : []
+                    });
+                    // Store reference globally
+                    if (config.id === 'calorieBalanceChart') calorieBalanceChart = config.chart;
+                    if (config.id === 'weightTrendChart') weightTrendChart = config.chart;
+                    if (config.id === 'consistencyChart') consistencyChart = config.chart;
+                    if (config.id === 'macroSplitChart') macroSplitChart = config.chart;
+                } else {
+                    // Update existing chart
+                    config.chart.data.datasets = config.data.datasets;
+                    config.chart.data.labels = config.data.labels;
+                    
+                    // Specific update for macro chart data
+                    if (config.id === 'macroSplitChart') {
+                        config.chart.data.datasets[0].data = [
+                            data.macroTotals.protein,
+                            data.macroTotals.carbs,
+                            data.macroTotals.fat,
+                            data.macroTotals.sugar,
+                            data.macroTotals.fiber
+                        ];
+                        config.chart.data.datasets[0].label = 'Macro Totals (g)';
+                        config.chart.data.labels = ['Protein (g)', 'Carbohydrates (g)', 'Fat (g)', 'Sugar (g)', 'Fiber (g)'];
+                    }
+
+                    // Need to explicitly update scale options for the weight chart because min/max is dynamic
+                    if (config.id === 'weightTrendChart') {
+                        config.chart.options.scales.y.min = config.options.scales.y.min;
+                        config.chart.options.scales.y.max = config.options.scales.y.max;
+                    }
+                    config.chart.update();
+                }
+            });
+        };
+
+        // --- INITIALIZATION ---
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // Calculate the start of the current week (Sunday)
+            const today = new Date();
+            let startOfCurrentWeek = new Date(today);
+            // Adjust date to the previous Sunday (day 0)
+            startOfCurrentWeek.setDate(startOfCurrentWeek.getDate() - startOfCurrentWeek.getDay());
+            // Set global state to the start of the current week being displayed
+            currentWeekStartDate = startOfCurrentWeek;
+
+            // Load and render the current week's data
+            loadWeek(0);
+
+            // --- ATTACH NAVIGATION EVENT LISTENERS ---
+            document.getElementById('prevWeekBtn').addEventListener('click', () => loadWeek(-7));
+            document.getElementById('nextWeekBtn').addEventListener('click', () => loadWeek(7));
+
+            // --- LOGOUT MODAL LOGIC (Standard) ---
+            const confirmLogoutFinalBtn = document.getElementById('confirmLogoutFinalBtn');
+            const confirmLogoutModalElement = document.getElementById('confirmLogoutModal');
+
+            if (confirmLogoutModalElement) {
+                const bsModal = new bootstrap.Modal(confirmLogoutModalElement);
+
+                confirmLogoutFinalBtn.addEventListener('click', () => {
+                    bsModal.hide();
+                    console.log("LOG OUT CONFIRMED: User logout process initiated. (Simulated)");
+                    // Simulated redirect to a sign-in page
+                    window.location.href = "Home_Page.html"; 
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
