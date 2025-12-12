@@ -1,8 +1,12 @@
-from flask import Flask,request,session,redirect,url_for,render_template,flash
+from flask import Flask,request,session,redirect,url_for,render_template,flash,jsonify
 import hashlib
 import mysql.connector
 from datetime import timedelta
 from models.user import User
+from models.activity import Activity
+from models.workout import Workout
+from models.goal import Goal
+from models.sleep import Sleep
 from database import cursor, db
 from flask_mail import Mail,Message
 from mail_service import MailService
@@ -308,6 +312,313 @@ def logout():
     if 'user' in session:
         session.clear()
         return redirect(url_for('start'))
+
+
+# ---------- JSON API endpoints for Activity / Workout / Goal / Sleep ----------
+
+def _require_user():
+    if 'user' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+    return None
+
+
+@app.route("/api/activities", methods=["GET", "POST"])
+def activities_api():
+    if request.method == "GET":
+        keyword = request.args.get("q")
+        category = request.args.get("category")
+        if keyword:
+            activities = Activity.search_activity(keyword)
+        else:
+            activities = Activity.get_activity_list(category=category)
+        return jsonify([a.to_dict() for a in activities])
+
+    # POST: create new activity (admin/owner only; requires login)
+    auth = _require_user()
+    if auth:
+        return auth
+
+    data = request.get_json(silent=True) or request.form
+    name = data.get("activity_name")
+    category = data.get("activity_category")
+    calories = data.get("calories_per_minute")
+    description = data.get("description")
+
+    if not name or not category or calories is None:
+        return jsonify({"error": "activity_name, activity_category, and calories_per_minute are required"}), 400
+    try:
+        calories_value = float(calories)
+    except ValueError:
+        return jsonify({"error": "calories_per_minute must be numeric"}), 400
+
+    activity = Activity.add_new_activity(name, category, calories_value, description)
+    return jsonify(activity.to_dict()), 201
+
+
+@app.route("/api/workouts", methods=["GET", "POST"])
+def workouts_api():
+    auth = _require_user()
+    if auth:
+        return auth
+    user_id = session["user"]
+
+    if request.method == "GET":
+        start_date = request.args.get("start_date")
+        end_date = request.args.get("end_date")
+        limit = request.args.get("limit", 50)
+        try:
+            limit_value = int(limit) if limit else 50
+        except ValueError:
+            return jsonify({"error": "limit must be an integer"}), 400
+
+        workouts = Workout.get_workout_history(user_id, start_date=start_date, end_date=end_date, limit=limit_value)
+        return jsonify([w.to_dict() for w in workouts])
+
+    data = request.get_json(silent=True) or request.form
+    activity_type = data.get("activity_type")
+    duration = data.get("duration")
+    intensity = data.get("intensity", "moderate")
+    workout_date = data.get("workout_date")
+    workout_time = data.get("workout_time")
+    calories_burned = data.get("calories_burned")
+
+    if not activity_type or duration is None:
+        return jsonify({"error": "activity_type and duration are required"}), 400
+    try:
+        duration_value = int(duration)
+        calories_value = int(calories_burned) if calories_burned is not None else None
+    except ValueError:
+        return jsonify({"error": "duration and calories_burned must be numeric"}), 400
+
+    try:
+        workout = Workout.log_workout(
+            user_id=user_id,
+            activity_type=activity_type,
+            duration=duration_value,
+            workout_date=workout_date,
+            workout_time=workout_time,
+            intensity=intensity,
+            calories_burned=calories_value,
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    return jsonify(workout.to_dict()), 201
+
+
+@app.route("/api/workouts/<int:workout_id>", methods=["PATCH", "DELETE"])
+def workout_detail_api(workout_id):
+    auth = _require_user()
+    if auth:
+        return auth
+    user_id = session["user"]
+
+    if request.method == "DELETE":
+        deleted = Workout.delete_workout(workout_id, user_id=user_id)
+        if not deleted:
+            return jsonify({"error": "Workout not found"}), 404
+        return "", 204
+
+    data = request.get_json(silent=True) or {}
+    numeric_fields = ("duration", "calories_burned")
+    fields = {}
+    for key in (
+        "activity_type",
+        "duration",
+        "workout_date",
+        "workout_time",
+        "calories_burned",
+        "intensity",
+    ):
+        value = data.get(key)
+        if value is None:
+            continue
+        if key in numeric_fields:
+            try:
+                value = int(value)
+            except ValueError:
+                return jsonify({"error": f"{key} must be numeric"}), 400
+        fields[key] = value
+
+    try:
+        updated = Workout.update_workout(workout_id, user_id=user_id, **fields)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    if not updated:
+        return jsonify({"error": "Workout not found"}), 404
+
+    workout = Workout.get_workout_history(user_id, limit=None)
+    current = next((w for w in workout if w.workout_id == workout_id), None)
+    return jsonify(current.to_dict() if current else {"workout_id": workout_id}), 200
+
+
+@app.route("/api/goals", methods=["GET", "POST"])
+def goals_api():
+    auth = _require_user()
+    if auth:
+        return auth
+    user_id = session["user"]
+
+    if request.method == "GET":
+        status = request.args.get("status")
+        goals = Goal.get_goals_for_user(user_id, status=status)
+        return jsonify([g.to_dict() for g in goals])
+
+    data = request.get_json(silent=True) or request.form
+    goal_type = data.get("goal_type")
+    if not goal_type:
+        return jsonify({"error": "goal_type is required"}), 400
+
+    def _parse_optional_int(value):
+        if value is None or value == "":
+            return None
+        try:
+            return int(value)
+        except ValueError:
+            return None
+
+    def _parse_optional_float(value):
+        if value is None or value == "":
+            return None
+        try:
+            return float(value)
+        except ValueError:
+            return None
+
+    target_weight = _parse_optional_float(data.get("target_weight"))
+    daily_calorie_target = _parse_optional_int(data.get("daily_calorie_target"))
+    start_date = data.get("start_date")
+    target_date = data.get("target_date")
+    status = data.get("status", "active")
+
+    goal = Goal.create_goal(
+        user_id=user_id,
+        goal_type=goal_type,
+        target_weight=target_weight,
+        daily_calorie_target=daily_calorie_target,
+        start_date=start_date,
+        target_date=target_date,
+        status=status,
+    )
+    return jsonify(goal.to_dict()), 201
+
+
+@app.route("/api/goals/<int:goal_id>", methods=["PATCH"])
+def goal_detail_api(goal_id):
+    auth = _require_user()
+    if auth:
+        return auth
+    user_id = session["user"]
+
+    data = request.get_json(silent=True) or {}
+    fields = {}
+    for key in ("goal_type", "start_date", "target_date", "status"):
+        if key in data and data.get(key) is not None:
+            fields[key] = data.get(key)
+
+    for numeric_field, parser in (
+        ("target_weight", float),
+        ("daily_calorie_target", int),
+    ):
+        if numeric_field in data and data.get(numeric_field) is not None:
+            try:
+                fields[numeric_field] = parser(data.get(numeric_field))
+            except ValueError:
+                return jsonify({"error": f"{numeric_field} must be numeric"}), 400
+
+    try:
+        updated = Goal.update_goal(goal_id, user_id=user_id, **fields)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    if not updated:
+        return jsonify({"error": "Goal not found"}), 404
+
+    goal = Goal.get_goal_by_id(goal_id, user_id=user_id)
+    return jsonify(goal.to_dict() if goal else {"goal_id": goal_id}), 200
+
+
+@app.route("/api/sleep", methods=["GET", "POST"])
+def sleep_api():
+    auth = _require_user()
+    if auth:
+        return auth
+    user_id = session["user"]
+
+    if request.method == "GET":
+        start_date = request.args.get("start_date")
+        end_date = request.args.get("end_date")
+        limit = request.args.get("limit", 30)
+        try:
+            limit_value = int(limit) if limit else 30
+        except ValueError:
+            return jsonify({"error": "limit must be numeric"}), 400
+
+        sleep_logs = Sleep.get_sleep_history(user_id, start_date=start_date, end_date=end_date, limit=limit_value)
+        return jsonify([s.to_dict() for s in sleep_logs])
+
+    data = request.get_json(silent=True) or request.form
+    sleep_date = data.get("sleep_date")
+    bedtime = data.get("bedtime")
+    wake_time = data.get("wake_time")
+    sleep_quality = data.get("sleep_quality")
+    notes = data.get("notes")
+    hours_slept = data.get("hours_slept")
+
+    try:
+        hours_value = float(hours_slept) if hours_slept not in (None, "") else None
+    except ValueError:
+        return jsonify({"error": "hours_slept must be numeric"}), 400
+
+    sleep_log = Sleep.log_sleep(
+        user_id=user_id,
+        sleep_date=sleep_date,
+        bedtime=bedtime,
+        wake_time=wake_time,
+        sleep_quality=sleep_quality,
+        notes=notes,
+        hours_slept=hours_value,
+    )
+    return jsonify(sleep_log.to_dict()), 201
+
+
+@app.route("/api/sleep/<int:sleep_log_id>", methods=["PATCH", "DELETE"])
+def sleep_detail_api(sleep_log_id):
+    auth = _require_user()
+    if auth:
+        return auth
+    user_id = session["user"]
+
+    if request.method == "DELETE":
+        deleted = Sleep.delete_sleep_log(sleep_log_id, user_id=user_id)
+        if not deleted:
+            return jsonify({"error": "Sleep log not found"}), 404
+        return "", 204
+
+    data = request.get_json(silent=True) or {}
+    fields = {}
+    for key in ("sleep_date", "bedtime", "wake_time", "sleep_quality", "notes"):
+        if key in data and data.get(key) is not None:
+            fields[key] = data.get(key)
+
+    if "hours_slept" in data and data.get("hours_slept") is not None:
+        try:
+            fields["hours_slept"] = float(data.get("hours_slept"))
+        except ValueError:
+            return jsonify({"error": "hours_slept must be numeric"}), 400
+
+    try:
+        updated = Sleep.update_sleep_log(sleep_log_id, user_id=user_id, **fields)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    if not updated:
+        return jsonify({"error": "Sleep log not found"}), 404
+
+    sleep_entries = Sleep.get_sleep_history(user_id, limit=None)
+    current = next((s for s in sleep_entries if s.sleep_log_id == sleep_log_id), None)
+    return jsonify(current.to_dict() if current else {"sleep_log_id": sleep_log_id}), 200
 
 
 if __name__ == "__main__":
