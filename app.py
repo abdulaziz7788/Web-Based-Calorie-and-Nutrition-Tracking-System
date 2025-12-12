@@ -4,10 +4,17 @@ import mysql.connector
 from datetime import timedelta
 from models.user import User
 from database import cursor, db
+from flask_mail import Mail,Message
+from mail_service import MailService
+import random
 
 app = Flask(__name__)
+app.config.from_object('config')
 app.secret_key = "5MS2"
 app.permanent_session_lifetime = timedelta(days=5)
+
+mail_service = MailService(app)
+
 
 @app.route('/')
 def start():
@@ -25,12 +32,16 @@ def login():
             request.form['email'],
             request.form['password']
         )
+        if user == "not_verified":
+            flash("⚠️ Please verify your email first!", "warning")
+            return redirect(url_for('login'))
+
         if user:
-            session.permanent = True
-            session['user'] = user[0]
+            session['user'] = user[1]
             return redirect(url_for('home'))
         else:
-            return render_template("login.html", error="Invalid email or password")
+            flash("❌ Email or password is wrong!", "danger")
+            return redirect(url_for('login'))
 
     return render_template("login.html")
 
@@ -75,14 +86,123 @@ def register():
                 activity=session['activity-level']
             )
 
-            session.clear()
 
             if success:
+                email = session['email']
+                token = mail_service.generate_token(email)
+                verify_link = url_for('verify_email', token=token, _external=True)
+
+                body=f"""
+                Welcome to CaloriFlow!
+
+                Please verify your email by clicking the link below:
+
+                {verify_link}
+                """
+
+                mail_service.send_email(
+                subject="Verify Your Email",
+                recipients=[email],
+                body=body
+                )
+
+                session.clear()
+                flash(" Registration successful! Check your email to verify your account.", "success")
                 return redirect(url_for('login'))
             else:
-                return "❌ Email already exists!"
+                flash("❌ Email already exists!", "danger")
+                return redirect(url_for('register', step="3"))
+
 
         return render_template("step3.html")
+
+@app.route('/verify/<token>')
+def verify_email(token):
+    email = mail_service.confirm_token(token)
+
+    if not email:
+        return "Invalid or expired token ❌"
+
+    sql = "UPDATE user SET is_verified = 1 WHERE email = %s"
+    cursor.execute(sql, (email,))
+    db.commit()
+
+    return "<p>Your email has been verified successfully! <p>"
+
+@app.route('/send_reset_code', methods=['POST'])
+def send_reset_code():
+    email = request.form['email']
+
+    sql = "SELECT user_id FROM user WHERE email=%s"
+    cursor.execute(sql, (email,))
+    user = cursor.fetchone()
+
+    if not user:
+        flash("❌ No account found with this email.", "danger")
+        return redirect(url_for('getmail'))
+
+    import random
+    code = str(random.randint(100000, 999999))
+
+    session['reset_email'] = email
+    session['reset_code'] = code
+
+    mail_service.send_email(
+        subject="Your Password Reset Code",
+        recipients=[email],
+        body=f"Your password reset code is: {code}"
+    )
+
+    flash("📩 A verification code has been sent to your email.", "info")
+    return redirect(url_for('verify_reset_code'))
+
+@app.route('/verify_reset_code', methods=['GET', 'POST'])
+def verify_reset_code():
+    if request.method == 'GET':
+        return render_template('verify_reset_code.html')
+
+    entered_code = request.form['code']
+
+    if entered_code == session.get('reset_code'):
+        session['reset_verified'] = True
+        return redirect(url_for('new_password'))
+
+    flash("❌ Incorrect code. Try again.", "danger")
+    return redirect(url_for('verify_reset_code'))
+
+@app.route('/new_password', methods=['GET', 'POST'])
+def new_password():
+    if not session.get('reset_verified'):
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'GET':
+        return render_template('new_password.html')
+
+    password = request.form['password']
+    confirm = request.form['confirm_password']
+
+    if password != confirm:
+        flash("❌ Passwords do not match.", "danger")
+        return redirect(url_for('new_password'))
+
+    hashed = hashlib.sha256(password.encode()).hexdigest()
+    email = session['reset_email']
+
+    sql = "UPDATE user SET password_hash=%s WHERE email=%s"
+    cursor.execute(sql, (hashed, email))
+    db.commit()
+
+    session.pop('reset_email', None)
+    session.pop('reset_code', None)
+    session.pop('reset_verified', None)
+
+    flash("✅ Your password has been updated! You can now log in.", "success")
+    return redirect(url_for('login'))
+
+
+@app.route('/getmail')
+def getmail():
+    return render_template('getmail.html')
 
 @app.route("/home",methods=["POST","GET"])
 def home():

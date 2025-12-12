@@ -67,9 +67,14 @@ class User:
     def login(email, password):
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
-        sql = "SELECT user_id FROM user WHERE email=%s AND password_hash=%s"
+        sql = "SELECT user_id, is_verified FROM user WHERE email=%s AND password_hash=%s"
+
         cursor.execute(sql, (email, hashed_password))
-        return cursor.fetchone()
+        user = cursor.fetchone()
+        if user and user[1] == 0:
+            return "not_verified"
+        
+        return user
 
 
 

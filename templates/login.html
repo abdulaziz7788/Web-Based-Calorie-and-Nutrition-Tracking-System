@@ -21,11 +21,21 @@
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" placeholder="Enter your password" required>
 
-                    <p class="forgot-password"><a hetf="#">Forgot password?</a></p>
+                    <p class="forgot-password">
+                        <a href="{{ url_for('getmail') }}">Forgot password?</a>
+                    </p>
 
                     <button type="submit" class="btn-primary">Log In</button>
                 </form>
-
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="flashes">
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
                 <p class="signup-link">Don't  have n account? <a href="{{url_for('register')}}">Sign up</a></p>
             </div>
         </div>

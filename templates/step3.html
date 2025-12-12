@@ -14,6 +14,16 @@
     <div class="register-container"> 
         <div class="register-box">
             
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="flashes">
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+
             <div class="step-indicator">
                 <span class="step-text">Step 3 of 3</span>
                 <div class="progress-bar">
