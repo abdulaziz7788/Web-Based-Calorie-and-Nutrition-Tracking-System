@@ -661,14 +661,14 @@ def meals():
         meal = Meal(
             mealID=None,
             userID=user_id,
-            mealName=request.form["meal_name"],
-            mealDate=request.form["meal_date"],
-            mealTime=request.form["meal_time"],
-            mealType=request.form["meal_type"],
-            totalCalories=float(request.form["total_calories"]),
-            totalProtein=float(request.form["total_protein"]),
-            totalCarbs=float(request.form["total_carbs"]),
-            totalFats=float(request.form["total_fats"])
+            mealName=request.form["mealName"],
+            mealDate=request.form["mealDate"],
+            mealTime=request.form["mealTime"],
+            mealType=request.form["mealType"],
+            totalCalories=float(request.form["totalCalories"]),
+            totalProtein=float(request.form["totalProtein"]),
+            totalCarbs=float(request.form["totalCarbs"]),
+            totalFats=float(request.form["totalFats"])
         )
         meal.logMeal()
 
