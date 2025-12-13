@@ -5,6 +5,10 @@ from datetime import timedelta,datetime,date
 from models.user import User
 from models.activity import Activity
 from models.workout import Workout
+from models.meal import Meal
+from models.Food import Food
+from models.mealf_ood import MealFood
+from models.Waterintake import WaterIntake
 from models.goal import Goal
 from models.sleep import Sleep
 from models.progress import Progress
@@ -645,6 +649,106 @@ def workout_detail_api(workout_id):
     workout = Workout.get_workout_history(user_id, limit=None)
     current = next((w for w in workout if w.workout_id == workout_id), None)
     return jsonify(current.to_dict() if current else {"workout_id": workout_id}), 200
+
+
+@app.route("/meals", methods=["GET", "POST"])
+def meals():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user']
+
+    if request.method == "POST":
+        meal = Meal(
+            mealID=None,
+            userID=user_id,
+            mealName=request.form["meal_name"],
+            mealDate=request.form["meal_date"],
+            mealTime=request.form["meal_time"],
+            mealType=request.form["meal_type"],
+            totalCalories=request.form["total_calories"],
+            totalProtein=request.form["total_protein"],
+            totalCarbs=request.form["total_carbs"],
+            totalFats=request.form["total_fats"]
+        )
+        meal.logMeal()
+
+    meals = Meal.getMealHistory(user_id)
+    return render_template("meals.html", meals=meals)
+
+
+@app.route("/foods", methods=["GET", "POST"])
+def foods():
+    if request.method == "POST":
+        food = Food(
+            foodID=None,
+            foodName=request.form["food_name"],
+            category=request.form["category"],
+            servingSize=request.form["serving_size"],
+            servingUnit=request.form["serving_unit"],
+            calories=request.form["calories"],
+            protein=request.form["protein"],
+            carbohydrates=request.form["carbohydrates"],
+            fats=request.form["fats"],
+            fiber=request.form["fiber"],
+            sugar=request.form["sugar"]
+        )
+        food.addNewFood()
+
+    foods = Food.searchFood("")
+    return render_template("foods.html", foods=foods)
+
+
+@app.route("/foods/search")
+def search_food():
+    keyword = request.args.get("q", "")
+    foods = Food.searchFood(keyword)
+    return render_template("foods.html", foods=foods)
+
+
+@app.route("/mealfood", methods=["GET", "POST"])
+def meal_food():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user']
+    meals = Meal.getMealHistory(user_id)
+    foods = Food.searchFood("")
+
+    if request.method == "POST":
+        entry = MealFood(
+            mealFoodID=None,
+            mealID=request.form["meal_id"],
+            foodID=request.form["food_id"],
+            quantity=request.form["quantity"],
+            caloriesConsumed=request.form["calories_consumed"]
+        )
+        entry.addFoodToMeal()
+
+    return render_template("meal_food.html", meals=meals, foods=foods)
+
+
+@app.route("/water", methods=["GET", "POST"])
+def water():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user']
+
+    if request.method == "POST":
+        water = WaterIntake(
+            waterIntakeID=None,
+            userID=user_id,
+            amount=float(request.form["amount"]),
+            unit=request.form["unit"],
+            loggedAt=None
+        )
+        water.addIntake()
+
+    history = WaterIntake.getIntakeHistory(user_id)
+    total = WaterIntake.getDailyTotal(user_id)
+    return render_template("water.html", history=history, total=total)
+
 
 
 @app.route("/api/goals", methods=["GET", "POST"])
