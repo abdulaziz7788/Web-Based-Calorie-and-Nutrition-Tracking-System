@@ -196,10 +196,10 @@ class Sleep:
     @classmethod
     def get_latest_sleep(cls, user_id):
         sql = """
-        SELECT sleep_log_id, user_id, sleep_date, bedtime, wake_time, hours_slept, sleep_quality, notes
+        SELECT sleep_id, user_id, hours, sleep_date
         FROM sleep_log
         WHERE user_id=%s
-        ORDER BY sleep_date DESC, bedtime DESC
+        ORDER BY sleep_date DESC
         LIMIT 1
         """
         cursor.execute(sql, (user_id,))

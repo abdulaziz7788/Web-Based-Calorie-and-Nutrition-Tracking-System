@@ -5,14 +5,13 @@ from datetime import timedelta,datetime,date
 from models.user import User
 from models.activity import Activity
 from models.workout import Workout
-from models.meal import Meal
+from models.meals import Meal
 from models.Food import Food
-from models.mealf_ood import MealFood
-from models.Waterintake import WaterIntake
+from models.mealfood import MealFood
+from models.WaterIntake import WaterIntake
 from models.goal import Goal
 from models.sleep import Sleep
 from models.progress import Progress
-from models.waterInTake import WaterIntake
 from database import cursor, db
 from flask_mail import Mail,Message
 from mail_service import MailService
@@ -52,7 +51,7 @@ def login():
             return redirect(url_for('login'))
 
         if user:
-            session['user'] = user.user_id 
+            session['user'] = user.user_id
             return redirect(url_for('home'))
         else:
             flash("❌ Email or password is wrong!", "danger")
@@ -361,7 +360,7 @@ def log_sleep():
 def meals():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('Meals.html')
+    return render_template('meal.html')
 
 @app.route('/add_meals')
 def add_meals():
@@ -652,7 +651,7 @@ def workout_detail_api(workout_id):
 
 
 @app.route("/meals", methods=["GET", "POST"])
-def meals():
+def meal():
     if 'user' not in session:
         return redirect(url_for('login'))
 

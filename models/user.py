@@ -67,14 +67,36 @@ class User:
     def login(email, password):
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
-        sql = "SELECT user_id, is_verified FROM user WHERE email=%s AND password_hash=%s"
+        sql = """
+        SELECT user_id, email, first_name, last_name, gender, date_of_birth,
+        current_weight, height, activity_level, is_verified
+        FROM user
+        WHERE email=%s AND password_hash=%s
+        """
 
         cursor.execute(sql, (email, hashed_password))
-        user = cursor.fetchone()
-        if user and user[1] == 0:
+        result = cursor.fetchone()
+
+        if not result:
+            return None
+
+        user_id, email, first_name, last_name, gender, dob, weight, height, activity, is_verified = result
+
+        if is_verified == 0:
             return "not_verified"
         
-        return user
+        return User(
+            user_id=user_id,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            gender=gender,
+            dob=dob.strftime("%Y-%m-%d") if isinstance(dob, datetime) else dob,
+            weight=float(weight),
+            height=float(height),
+            activity=activity
+        )
+
 
 
 
