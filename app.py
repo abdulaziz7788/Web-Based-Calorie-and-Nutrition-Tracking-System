@@ -372,7 +372,14 @@ def add_meals():
 def workouts():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('Workouts.html')
+
+    user_id = session['user']
+    user = User.get_user_by_id(user_id)
+    if not user:
+        session.clear()
+        return redirect(url_for('login'))
+
+    return render_template('workout.html', first_name=user.first_name)
 
 
 @app.route('/settings',methods=["POST","GET"])
