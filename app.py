@@ -651,7 +651,7 @@ def workout_detail_api(workout_id):
 
 
 @app.route("/meals", methods=["GET", "POST"])
-def meal():
+def meals():
     if 'user' not in session:
         return redirect(url_for('login'))
 
@@ -665,15 +665,18 @@ def meal():
             mealDate=request.form["meal_date"],
             mealTime=request.form["meal_time"],
             mealType=request.form["meal_type"],
-            totalCalories=request.form["total_calories"],
-            totalProtein=request.form["total_protein"],
-            totalCarbs=request.form["total_carbs"],
-            totalFats=request.form["total_fats"]
+            totalCalories=float(request.form["total_calories"]),
+            totalProtein=float(request.form["total_protein"]),
+            totalCarbs=float(request.form["total_carbs"]),
+            totalFats=float(request.form["total_fats"])
         )
         meal.logMeal()
 
+        return redirect(url_for("meals"))
+
     meals = Meal.getMealHistory(user_id)
-    return render_template("meals.html", meals=meals)
+    return render_template("meal.html", meals=meals)
+
 
 
 @app.route("/foods", methods=["GET", "POST"])
