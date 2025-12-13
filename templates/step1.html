@@ -22,6 +22,16 @@
             <h2>Create Your Account</h2>
             <p class="subtitle">Tell us a bit about yourself.</p>
 
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="flashes">
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+
             <form action="{{ url_for('register',step=1)}}" method="POST">
                 <div class="form-columns">
                     
@@ -32,15 +42,16 @@
                         </div>
                         
                         <div class="form-group">
-                            <label>Gender</label> <div class="radio-group">
+                            <label>Gender</label> 
+                            <div class="radio-group">
         
                                 <div class="radio-option">
-                                    <input type="radio" id="male" name="gender" value="male" required>
+                                    <input type="radio" id="male" name="gender" value="M" required>
                                     <label for="male">Male</label>
                                 </div>
         
                                 <div class="radio-option">
-                                    <input type="radio" id="female" name="gender" value="female">
+                                    <input type="radio" id="female" name="gender" value="F">
                                     <label for="female">Female</label>
                                 </div>
 
@@ -63,7 +74,7 @@
                 </div>
                 
                 <div class="navigation-buttons">
-                    <a href="{{ url_for('home') }}">
+                    <a href="{{ url_for('start') }}">
                         <button type="button" class="btn-secondary">Back</button>
                     </a>
                     <button type="submit" class="btn-primary">Next Step</button>

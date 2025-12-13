@@ -526,9 +526,11 @@
                         <!-- Icons will be injected here by JavaScript -->
                     </div>
 
-                    <h2 class="text-white fw-bold mb-3" id="waterStatus">0 of 2000 ml</h2>
+                    <h2 class="text-white fw-bold mb-3">
+    {{ water_today }} of {{ water_goal }} ml
+</h2>
                     <!-- Text change -->
-                    <p class="small text-secondary water-goal-text">Goal: 10 bottles (200 ml each)</p>
+                    <p class="small text-secondary water-goal-text">Goal: {{water_goal}} ml</p>
 
                     <button class="btn btn-sm btn-add-entry w-100 mt-2" data-bs-toggle="modal"
                         data-bs-target="#addWaterModal">
@@ -545,17 +547,39 @@
                         <h5 class="mb-0 text-white">Sleep Hours</h5>
                     </div>
                     <!-- Sleep Hours Text -->
-                    <h2 class="text-white fw-bold mb-3" id="sleepStatusText">0h 0m</h2>
+                    <h2 class="text-white fw-bold mb-3">
+                        {{ sleep_minutes // 60 }}h {{ sleep_minutes % 60 }}m
+                    </h2>
+
 
                     <!-- Sleep Progress Bar -->
                     <div class="progress-bar-custom mb-2">
-                        <div id="sleepProgressBar" style="width: 0%; height: 100%;"></div>
-                    </div>
+    <div
+  class="progress-fill-excellent"
+  style="width: {{ sleep_percentage }}%; height: 100%;">
+</div>
+
+</div>
+
 
                     <!-- Conditional Sleep Quality Text -->
-                    <p class="small text-secondary" id="sleepQualityText">
-                        Sleep Quality: <span id="sleepQualityRating" class="text-white">N/A</span>
-                    </p>
+                    <p class="small text-secondary">
+                    Sleep Quality:
+                        <span class="
+                                {% if sleep_minutes < 180 %}text-bad
+                                {% elif sleep_minutes < 360 %}text-decent
+                                {% elif sleep_minutes <= 480 %}text-excellent
+                                {% else %}text-overslept
+                                {% endif %}
+                                ">
+                                {% if sleep_minutes < 180 %}Poor
+        {% elif sleep_minutes < 360 %}Fair
+        {% elif sleep_minutes <= 480 %}Excellent
+        {% else %}Overslept
+        {% endif %}
+    </span>
+</p>
+
 
                     <button class="btn btn-sm btn-add-entry w-100 mt-2" data-bs-toggle="modal"
                         data-bs-target="#addSleepModal">
@@ -695,7 +719,7 @@
                     <!-- Modal X button style update is handled by CSS -->
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form id="addSleepForm">
+                <form method="post" id="addSleepForm" action="{{ url_for('log_sleep') }}">
                     <div class="modal-body text-center">
                         <label class="form-label text-white mb-3">Hours to Log (H:MM):</label>
 
@@ -772,8 +796,7 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
+        <script>
         // --- GLOBAL CONSTANTS ---
         const START_WEIGHT_KG = 100;
         const TARGET_WEIGHT_KG = 70;
@@ -1080,6 +1103,7 @@
             }
         });
     </script>
+
 </body>
 
 </html>

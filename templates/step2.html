@@ -23,36 +23,46 @@
             <h2>Your profile</h2>
             <p class="subtitle">Help us customize your experience.</p>
 
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="flashes">
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+
             <form action="{{ url_for('register',step=2)}}" method="post">
                 
                 <div class="form-section">
                     <h3>How tall are you?</h3>
                     <div class="input-with-unit">
-                        <input type="number" id="height" name="height" placeholder="Height (cm)" required>
+                        <input type="number" id="height" name="height" placeholder="Height (cm)" min="50" max="300" required>
                         <span class="unit-label">cm</span>
                     </div>
 
                     <h3>How much do you weigh?</h3>
                     <p class="note">it's ok to estimate, you can update it later.</p>
                     <div class="input-with-unit">
-                        <input type="number" id="weight" name="weight" placeholder="weigh (kg)" required>
+                        <input type="number" id="weight" name="weight" placeholder="weight (kg)" min="20" max="500" step="0.1" required>
                         <span class="unit-label">kg</span>
                     </div>
                 </div>
 
                 <div class="form-section">
                     <h3>What is your baseline activity level?</h3>
-                    <p class="note">This dose not include workouts.</p>
+                    <p class="note">This does not include workouts.</p>
                     <div class="activity-cards">
 
                         <label class="activity-card">
-                            <input type="radio" name="activity-level" value="not-very-active">
+                            <input type="radio" name="activity-level" value="not-very-active" required>
                             <h4>Not Very Active</h4>
                             <p>Spend most of the day sitting (e.g., bank teller, desk job)</p>
                         </label>
 
                         <label class="activity-card">
-                            <input type="radio" name="activity-level" value="lightly-active">
+                            <input type="radio" name="activity-level" value="lightly-active" checked>
                             <h4>Lightly Active</h4>
                             <p>Spend a good part of the day on your feet (e.g., teacher, salesperson)</p>
                         </label>
@@ -60,13 +70,13 @@
                         <label class="activity-card">
                             <input type="radio" name="activity-level" value="active">
                             <h4>Active</h4>
-                            <p>Spend a good part of the day doing some physical activity (e.g., food, server)</p>
+                            <p>Spend a good part of the day doing some physical activity (e.g., food server)</p>
                         </label>
 
                         <label class="activity-card">
                             <input type="radio" name="activity-level" value="Very-Active">
                             <h4>Very Active</h4>
-                            <p>Spend a good part of the day doing heavy physical activity (e.g., bike, massenger)</p>
+                            <p>Spend a good part of the day doing heavy physical activity (e.g., bike messenger)</p>
                         </label>
 
                     </div>

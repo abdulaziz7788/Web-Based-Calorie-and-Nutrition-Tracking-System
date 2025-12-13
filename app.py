@@ -1,21 +1,29 @@
-from flask import Flask,request,session,redirect,url_for,render_template,flash,jsonify
+from flask import Flask,request,session,redirect,url_for,render_template,flash,jsonify,Blueprint
 import hashlib
 import mysql.connector
-from datetime import timedelta
+from datetime import timedelta,datetime,date
 from models.user import User
 from models.activity import Activity
 from models.workout import Workout
 from models.goal import Goal
 from models.sleep import Sleep
+from models.progress import Progress
+from models.waterInTake import WaterIntake
 from database import cursor, db
 from flask_mail import Mail,Message
 from mail_service import MailService
 import random
+import re
 
 app = Flask(__name__)
 app.config.from_object('config')
 app.secret_key = "5MS2"
 app.permanent_session_lifetime = timedelta(days=5)
+
+# Security improvements
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 mail_service = MailService(app)
 
@@ -31,21 +39,21 @@ def start():
 def login():
     if 'user' in session:
         return redirect(url_for('home'))
+
     if request.method == "POST":
-        user = User.login(
-            request.form['email'],
-            request.form['password']
-        )
+        user = User.login(request.form['email'], request.form['password'])
+
         if user == "not_verified":
             flash("⚠️ Please verify your email first!", "warning")
             return redirect(url_for('login'))
 
         if user:
-            session['user'] = user[1]
+            session['user'] = user.user_id 
             return redirect(url_for('home'))
         else:
             flash("❌ Email or password is wrong!", "danger")
             return redirect(url_for('login'))
+
 
     return render_template("login.html")
 
@@ -58,32 +66,102 @@ def register():
         if request.method == "POST":
             session['first-name'] = request.form['first-name']
             session['last-name'] = request.form['last-name']
-            session['gender'] = request.form['gender']
-            session['dob'] = request.form['dob']
+            # FIX: Convert gender to uppercase
+            session['gender'] = request.form['gender'].upper()
+            
+            # Validate date of birth
+            dob = request.form['dob']
+            try:
+                dob_date = datetime.strptime(dob, '%Y-%m-%d').date()
+                today = datetime.now().date()
+                age = (today - dob_date).days // 365
+                
+                if dob_date >= today:
+                    flash("❌ Date of birth cannot be in the future!", "danger")
+                    return redirect(url_for("register", step="1"))
+                
+                if age < 13:
+                    flash("❌ You must be at least 13 years old to register!", "danger")
+                    return redirect(url_for("register", step="1"))
+                    
+            except ValueError:
+                flash("❌ Invalid date format!", "danger")
+                return redirect(url_for("register", step="1"))
+            
+            session['dob'] = dob
             return redirect(url_for("register", step="2"))
 
         return render_template("step1.html")
 
     elif step == "2":
         if request.method == "POST":
+            # Validate height and weight
+            try:
+                height = float(request.form['height'])
+                weight = float(request.form['weight'])
+                
+                if not (50 <= height <= 300):
+                    flash("❌ Height must be between 50 and 300 cm!", "danger")
+                    return redirect(url_for("register", step="2"))
+                
+                if not (20 <= weight <= 500):
+                    flash("❌ Weight must be between 20 and 500 kg!", "danger")
+                    return redirect(url_for("register", step="2"))
+                    
+            except ValueError:
+                flash("❌ Height and weight must be valid numbers!", "danger")
+                return redirect(url_for("register", step="2"))
+            
             session['height'] = request.form['height']
             session['weight'] = request.form['weight']
-            session['activity-level'] = request.form['activity-level']
+            
+            # Ensure activity level is selected
+            activity_level = request.form.get('activity-level')
+            if not activity_level:
+                flash("❌ Please select an activity level!", "danger")
+                return redirect(url_for("register", step="2"))
+            
+            session['activity-level'] = activity_level
             return redirect(url_for("register", step="3"))
 
         return render_template("step2.html")
 
     elif step == "3":
         if request.method == "POST":
-            session['email'] = request.form['email']
-            session['password'] = request.form['password']
+            email = request.form['email']
+            password = request.form['password']
+            confirm_password = request.form.get('confirm-password')
+            
+            # FIX: Validate email format
+            email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_regex, email):
+                flash("❌ Invalid email format!", "danger")
+                return redirect(url_for('register', step="3"))
+            
+            # FIX: Validate password confirmation
+            if password != confirm_password:
+                flash("❌ Passwords do not match!", "danger")
+                return redirect(url_for('register', step="3"))
+            
+            # FIX: Validate password length
+            if len(password) < 10:
+                flash("❌ Password must be at least 10 characters!", "danger")
+                return redirect(url_for('register', step="3"))
+            
+            # Check for spaces in password
+            if ' ' in password:
+                flash("❌ Password cannot contain spaces!", "danger")
+                return redirect(url_for('register', step="3"))
+            
+            session['email'] = email
+            session['password'] = password
 
             success = User.register(
                 email=session['email'],
                 password=session['password'],
                 first_name=session['first-name'],
                 last_name=session['last-name'],
-                gender=session['gender'].upper(),
+                gender=session['gender'],
                 dob=session['dob'],
                 weight=float(session['weight']),
                 height=float(session['height']),
@@ -97,7 +175,7 @@ def register():
                 verify_link = url_for('verify_email', token=token, _external=True)
 
                 body=f"""
-                Welcome to CaloriFlow!
+                Welcome to CalorieFlow!
 
                 Please verify your email by clicking the link below:
 
@@ -111,7 +189,7 @@ def register():
                 )
 
                 session.clear()
-                flash(" Registration successful! Check your email to verify your account.", "success")
+                flash("✅ Registration successful! Check your email to verify your account.", "success")
                 return redirect(url_for('login'))
             else:
                 flash("❌ Email already exists!", "danger")
@@ -131,7 +209,7 @@ def verify_email(token):
     cursor.execute(sql, (email,))
     db.commit()
 
-    return "<p>Your email has been verified successfully! <p>"
+    return "<p>Your email has been verified successfully! ✅</p>"
 
 @app.route('/send_reset_code', methods=['POST'])
 def send_reset_code():
@@ -145,7 +223,6 @@ def send_reset_code():
         flash("❌ No account found with this email.", "danger")
         return redirect(url_for('getmail'))
 
-    import random
     code = str(random.randint(100000, 999999))
 
     session['reset_email'] = email
@@ -177,7 +254,7 @@ def verify_reset_code():
 @app.route('/new_password', methods=['GET', 'POST'])
 def new_password():
     if not session.get('reset_verified'):
-        return redirect(url_for('forgot_password'))
+        return redirect(url_for('getmail'))
 
     if request.method == 'GET':
         return render_template('new_password.html')
@@ -187,6 +264,10 @@ def new_password():
 
     if password != confirm:
         flash("❌ Passwords do not match.", "danger")
+        return redirect(url_for('new_password'))
+    
+    if len(password) < 10:
+        flash("❌ Password must be at least 10 characters!", "danger")
         return redirect(url_for('new_password'))
 
     hashed = hashlib.sha256(password.encode()).hexdigest()
@@ -208,27 +289,88 @@ def new_password():
 def getmail():
     return render_template('getmail.html')
 
-@app.route("/home",methods=["POST","GET"])
+@app.route("/home", methods=["GET"])
 def home():
-    if 'user' in session:
-        userID = session['user']
-        user = User.get_user_by_id(userID)
-
-        if user:
-            return render_template('home.html',first_name = user.first_name,kcal = user.get_recommended_calories())
-    else:
+    if 'user' not in session:
         return redirect(url_for('login'))
 
-@app.route('/progress',methods=["POST","GET"])
-def progress():
-    if 'user' in session:
-        userID = session['user']
-        user = User.get_user_by_id(userID)
+    userID = session['user']
+    user = User.get_user_by_id(userID)
 
-        if user:
-            return render_template('progress.html')
-    else:
+    if not user:
         return redirect(url_for('login'))
+
+    today = date.today().strftime("%Y-%m-%d")
+
+    # 💧 WATER
+    water_today = WaterIntake.getDailyTotal(userID, today)
+    water_goal = WaterIntake.calculateDailyGoal(userID)
+
+    # 😴 SLEEP
+    latest_sleep = Sleep.get_latest_sleep(userID)
+    sleep_minutes = 0
+    if latest_sleep and latest_sleep.hours_slept:
+        sleep_minutes = int(latest_sleep.hours_slept * 60)
+
+    sleep_percentage = min((sleep_minutes / 480) * 100, 100)
+
+    return render_template(
+        "home.html",
+
+        # USER
+        user=user,
+        first_name=user.first_name,
+
+        # CALORIES
+        kcal=user.get_recommended_calories(),
+
+        # WATER
+        water_today=water_today,
+        water_goal=water_goal,
+
+        # SLEEP
+        sleep_minutes=sleep_minutes,
+        sleep_percentage=sleep_percentage
+
+    )
+
+@app.route("/sleep/add", methods=["POST"])
+def log_sleep():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    hours = int(request.form["hours"])
+    minutes = int(request.form["minutes"])
+
+    total_hours = round(hours + minutes / 60, 2)
+
+    Sleep.log_sleep(
+        user_id=session['user'],
+        hours=total_hours
+    )
+
+    return redirect(url_for("home"))
+
+
+# FIX: Add missing routes
+@app.route('/meals')
+def meals():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('Meals.html')
+
+@app.route('/add_meals')
+def add_meals():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('AddingMeals.html')
+
+@app.route('/workouts')
+def workouts():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('Workouts.html')
+
 
 @app.route('/settings',methods=["POST","GET"])
 def settings():
@@ -241,10 +383,27 @@ def settings():
             last_name = request.form.get("last_name")
             email = request.form.get("email")
             dob = request.form.get("dob")
-            gender = request.form.get("gender")
+            gender = request.form.get("gender").upper()  # FIX: Ensure uppercase
             height = request.form.get("height")
             weight = request.form.get("weight")
             activity = request.form.get("activity")
+            
+            # Validate inputs
+            try:
+                height_val = float(height)
+                weight_val = float(weight)
+                
+                if not (50 <= height_val <= 300):
+                    flash("❌ Height must be between 50 and 300 cm!", "danger")
+                    return redirect(url_for('settings'))
+                
+                if not (20 <= weight_val <= 500):
+                    flash("❌ Weight must be between 20 and 500 kg!", "danger")
+                    return redirect(url_for('settings'))
+                    
+            except (ValueError, TypeError):
+                flash("❌ Invalid height or weight!", "danger")
+                return redirect(url_for('settings'))
 
             sql = '''
                 UPDATE user
@@ -253,6 +412,8 @@ def settings():
                 '''
             cursor.execute(sql,(first_name,last_name,email,dob,gender,height,weight,activity,userID))
             db.commit()
+            
+            flash("✅ Settings updated successfully!", "success")
 
             user = User.get_user_by_id(userID)
 
@@ -260,7 +421,7 @@ def settings():
                                     first_name = user.first_name,
                                     last_name = user.last_name,
                                     email = user.email,
-                                    dob=user.dob,
+                                    dob=user.dob.strftime('%Y-%m-%d') if user.dob else '',
                                     gender=user.gender,
                                     height = user.height,
                                     weight=user.weight,
@@ -270,7 +431,7 @@ def settings():
                                     first_name = user.first_name,
                                     last_name = user.last_name,
                                     email = user.email,
-                                    dob=user.dob,
+                                    dob=user.dob.strftime('%Y-%m-%d') if user.dob else '',
                                     gender=user.gender,
                                     height = user.height,
                                     weight=user.weight,
@@ -289,13 +450,17 @@ def change_password():
     confirm_new_password = request.form['confirm_new_password']
 
     if new_password != confirm_new_password:
-        flash("New passwords do not match", "danger")
+        flash("❌ New passwords do not match", "danger")
+        return redirect(url_for('settings'))
+    
+    if len(new_password) < 10:
+        flash("❌ Password must be at least 10 characters!", "danger")
         return redirect(url_for('settings'))
 
     user = User.get_user_by_id(userID)
 
     if not user.check_password(current_password):
-        flash("Current password is incorrect", "danger")
+        flash("❌ Current password is incorrect", "danger")
         return redirect(url_for('settings'))
     
     hashed = hashlib.sha256(new_password.encode()).hexdigest()
@@ -303,8 +468,37 @@ def change_password():
     cursor.execute(sql, (hashed, userID))
     db.commit()
 
-    flash("Password updated successfully!", "success")
+    flash("✅ Password updated successfully!", "success")
     return redirect(url_for('settings'))
+
+
+@app.route("/progress")
+def progress():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+        
+    user_id = session["user"]
+
+    today = datetime.today().date()
+    week_start = today - timedelta(days=today.weekday() + 1)
+
+    daily = Progress.get_weekly_daily_summary(user_id, week_start)
+    water = Progress.get_weekly_water(user_id, week_start)
+    sleep = Progress.get_weekly_sleep(user_id, week_start)
+    summary = Progress.get_weekly_summary_boxes(user_id, week_start)
+    macros = Progress.get_weekly_macros(user_id, week_start)
+
+
+    return render_template(
+        "progress.html",
+        daily=daily,
+        water=water,
+        sleep=sleep,
+        total_water_l=summary['total_water_l'],
+        avg_sleep=summary['avg_sleep'],
+        macros=macros
+    )
+
 
 
 @app.route('/logout',methods=["POST","GET"])
