@@ -50,20 +50,23 @@ class Meal:
         db.commit()
 
     @staticmethod
-    def getMealHistory(userID):
-        sql = """
-        SELECT meal_id, user_id, meal_name, meal_date, meal_time, meal_type,
-               total_calories, total_protein, total_carbs, total_fats
-        FROM meals
-        WHERE user_id = %s
-        ORDER BY meal_date DESC, meal_time DESC
-        """
-        cursor.execute(sql, (userID,))
-        result = cursor.fetchall()
-        meals = []
-        for row in result:
-            meals.append(Meal(*row))
-        return meals
+def getMealHistory(userID):
+    sql = """
+    SELECT log_id, user_id, meal_name, meal_date, meal_time, meal_type,
+           total_calories, total_protein, total_carbs, total_fats
+    FROM meal_log
+    WHERE user_id = %s
+    ORDER BY meal_date DESC, meal_time DESC
+    """
+    cursor.execute(sql, (userID,))
+    result = cursor.fetchall()
+
+    meals = []
+    for row in result:
+        meals.append(Meal(*row))
+
+    return meals
+
 
     def calculateNutrients(self):
         return {
@@ -75,3 +78,4 @@ class Meal:
 
     def __str__(self):
         return f"Meal: {self.mealName} ({self.mealType}) - {self.totalCalories} kcal"
+
