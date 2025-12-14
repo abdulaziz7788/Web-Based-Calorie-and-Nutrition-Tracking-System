@@ -206,7 +206,7 @@
 
             async function fetchWorkouts() {
                 try {
-                    const res = await fetch(`${workoutsEndpoint}?limit=20`);
+                    const res = await fetch(`${workoutsEndpoint}?limit=20`, { credentials: 'same-origin' });
                     if (!res.ok) throw new Error('Failed to load workouts');
                     const data = await res.json();
                     renderWorkouts(data);
@@ -224,11 +224,13 @@
                     const res = await fetch(workoutsEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
                         body: JSON.stringify(payload)
                     });
                     if (!res.ok) {
                         const errData = await res.json().catch(() => ({}));
-                        throw new Error(errData.error || 'Failed to save workout');
+                        const msg = errData.error || (res.status === 401 ? 'Please log in again.' : 'Failed to save workout');
+                        throw new Error(msg);
                     }
                     setStatus('Saved');
                     formEl.reset();
